@@ -6,11 +6,14 @@ const pool = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    port: process.env.DB_PORT || 3306, // Belirtilmezse varsayılan 3306'yı kullanır
+    port: process.env.DB_PORT || 3306,
     database: process.env.DB_NAME,
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0
+    queueLimit: 0,
+    ssl: {
+        rejectUnauthorized: false // Bulut veritabanına SSL ile güvenli bağlanmak için şarttır
+    }
 });
 
 // Diğer dosyalar da bu bağlantıyı kullanabilsin diye dışa aktarıyoruz
