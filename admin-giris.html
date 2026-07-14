@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Admin Girişi - CodeBots</title>
+<style>
+    body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f1f5f9;
+        font-family: 'Segoe UI', Arial, sans-serif;
+    }
+    .kutu {
+        background: #ffffff;
+        padding: 40px 36px;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        width: 100%;
+        max-width: 340px;
+        text-align: center;
+    }
+    .kutu img { height: 44px; margin-bottom: 18px; }
+    .kutu h2 { margin: 0 0 20px 0; color: #0f172a; font-size: 1.2rem; }
+    .kutu input {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 10px;
+        border: 1px solid #cbd5e1;
+        margin-bottom: 14px;
+        font-size: 0.95rem;
+        box-sizing: border-box;
+    }
+    .kutu button {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 10px;
+        background: #0056b3;
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 0.95rem;
+        cursor: pointer;
+    }
+    .hata {
+        color: #dc2626;
+        font-size: 0.85rem;
+        margin-top: 12px;
+        min-height: 18px;
+    }
+</style>
+</head>
+<body>
+    <div class="kutu">
+        <img src="/codebots-logo.png" alt="CodeBots">
+        <h2>Admin Paneli Girişi</h2>
+        <input type="text" id="kullaniciAdiInput" placeholder="Kullanıcı Adı">
+<input type="password" id="sifreInput" placeholder="Şifre">
+        <button onclick="girisYap()">Giriş Yap</button>
+        <div class="hata" id="hataMesaji"></div>
+    </div>
+
+    <script>
+        async function girisYap() {
+            const kullaniciAdi = document.getElementById('kullaniciAdiInput').value;
+const sifre = document.getElementById('sifreInput').value;
+            const hataMesaji = document.getElementById('hataMesaji');
+            hataMesaji.textContent = '';
+
+            try {
+                const res = await fetch('/api/admin/giris', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ kullaniciAdi, sifre })
+                });
+
+                if (res.ok) {
+                    window.location.href = '/admin';
+                } else {
+                    hataMesaji.textContent = 'Şifre yanlış, tekrar deneyin.';
+                }
+            } catch (err) {
+                hataMesaji.textContent = 'Bir hata oluştu, tekrar deneyin.';
+            }
+        }
+
+        document.getElementById('sifreInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') girisYap();
+        });
+    </script>
+</body>
+</html>

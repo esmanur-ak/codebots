@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeBots - Yönetim Paneli</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f7f6; color: #333; }
+        header { background: #0056b3; color: white; padding: 20px; text-align: center; }
+        .container { width: 90%; max-width: 600px; margin: 40px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h2 { color: #0056b3; border-bottom: 2px solid #0056b3; padding-bottom: 8px; margin-top: 0; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input[type="text"], textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; box-sizing: border-box; }
+        textarea { height: 100px; font-family: inherit; }
+        button { width: 100%; background: #0056b3; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 1.1rem; cursor: pointer; font-weight: bold; }
+        button:hover { background: #004494; }
+        .nav-link { display: inline-block; margin-top: 20px; color: #0056b3; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>CodeBots Yönetim Paneli 🔐</h1>
+    </header>
+
+    <div class="container">
+        <h2>Yeni Kurs Ekle</h2>
+        <p>Buradan eklediğiniz kurs anlık olarak MySQL veri tabanına yazılır ve ana sitede görünür.</p>
+        
+        <form id="kursFormu">
+            <div class="form-group">
+                <label>Kurs Adı:</label>
+                <input type="text" id="kurs_adi" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Kurs Açıklaması:</label>
+                <textarea id="aciklama" required></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Hedef Yaş Grubu:</label>
+                <input type="text" id="yas_grubu" placeholder="Örn: 10-14 Yaş" required>
+            </div>
+            
+            <button type="submit">✨ Kursu Veri Tabanına Kaydet</button>
+        </form>
+        <div style="margin-top: 40px;">
+    <h3>Mevcut Kurslar ve Yönetim</h3>
+    <div id="admin-kurs-listesi" style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+        </div>
+</div>
+        
+        <div id="mesajKutusu" style="margin-top: 15px; font-weight: bold; display: none;"></div>
+        
+        <a href="/" class="nav-link">← Ana Sayfaya Git</a>
+    </div>
+
+<script>
+   // Güncelleme modunda mıyız, yoksa yeni kurs mu ekliyoruz? Bunu takip eden iki değişken:
+let guncellemeModu = false;
+let guncellenecekKursId = null;
+
+// 1. SİHİR: Kursları admin panelinde listeler (Düzenle butonu eklendi!)
+async function adminKurslariGetir() {
+    try {
+        const res = await fetch('/api/kurslar');
+        const kurslar = await res.json();
+
+        const liste = document.getElementById('admin-kurs-listesi');
+        liste.innerHTML = ''; 
+
+        if(kurslar.length === 0) {
+            liste.innerHTML = '<p style="color: #999;">Henüz eklenmiş bir kurs bulunmuyor.</p>';
+            return;
+        }
+
+        kurslar.forEach(kurs => {
+            liste.innerHTML += `
+                <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 10px;">
+                    <div>
+                        <strong style="font-size: 1.1rem; color: #333;">🤖 ${kurs.kurs_adi}</strong>
+                        <span style="font-size: 0.85rem; background: #0056b3; color: white; padding: 2px 8px; border-radius: 12px; margin-left: 10px;">${kurs.yas_grubu}</span>
+                        <p style="margin: 5px 0 0 0; font-size: 0.9rem; color: #666;">${kurs.aciklama}</p>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick='formaKursBilgileriniDoldur(${JSON.stringify(kurs)})' style="background: #ffc107; color: #212529; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                            ✍️ Düzenle
+                        </button>
+                        <button onclick="kursSil(${kurs.id})" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                            🗑️ Sil
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        
+    } catch (error) {
+        console.error("Kurslar listelenirken hata oluştu:", error);
+    }
+}
+
+// 2. SİHİR: Düzenle butonuna basınca kurs bilgilerini form kutularına geri doldurur
+function formaKursBilgileriniDoldur(kurs) {
+    // Formdaki kutulara mevcut kursun eski yazılarını yazıyoruz
+    document.getElementById('kurs_adi').value = kurs.kurs_adi;
+    document.getElementById('aciklama').value = kurs.aciklama;
+    document.getElementById('yas_grubu').value = kurs.yas_grubu;
+
+    // Modumuzu güncelleme olarak değiştiriyoruz
+    guncellemeModu = true;
+    guncellenecekKursId = kurs.id;
+
+    // Teyzen ne yaptığını anlasın diye o mavi butonun yazısını değiştiriyoruz!
+    const buton = document.querySelector('#kursFormu button');
+    buton.innerText = "💾 Değişiklikleri Veri Tabanına Kaydet";
+    buton.style.background = "#28a745"; // Butonu yeşil yapıyoruz
+}
+
+// 3. SİHİR: Form gönderildiğinde (Hem Ekleme hem Güncelleme işini burası yönetir)
+document.getElementById('kursFormu').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const kursVerisi = {
+        kurs_adi: document.getElementById('kurs_adi').value,
+        aciklama: document.getElementById('aciklama').value,
+        yas_grubu: document.getElementById('yas_grubu').value
+    };
+
+    const mesajKutusu = document.getElementById('mesajKutusu');
+    
+    // Eğer güncelleme modundaysak PUT, normaldeysek POST isteği atacağız:
+    let url = '/api/kurslar';
+    let metod = 'POST';
+
+    if (guncellemeModu) {
+        url = `/api/kurslar/${guncellenecekKursId}`;
+        metod = 'PUT'; // Az önce konuştuğumuz o PUT emri!
+    }
+
+    try {
+        const response = await fetch(url, {
+            method: metod,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(kursVerisi)
+        });
+
+        const sonuc = await response.json();
+
+        if (response.ok) {
+            mesajKutusu.style.color = "green";
+            mesajKutusu.innerText = "🎉 " + sonuc.message;
+            mesajKutusu.style.display = "block";
+            
+            // Formu temizle ve eski haline getir
+            document.getElementById('kursFormu').reset();
+            guncellemeModu = false;
+            guncellenecekKursId = null;
+            
+            const buton = document.querySelector('#kursFormu button');
+            buton.innerText = "✨ Kursu Veri Tabanına Kaydet";
+            buton.style.background = "#0056b3"; // Butonu tekrar mavi yap
+
+            adminKurslariGetir(); // Listeyi anında güncelle
+            mesajlariGetir(); // Bunu ekle
+            velileriGetir();   // Bunu ekle
+        } else {
+            throw new Error(sonuc.error);
+        }
+
+    } catch (error) {
+        mesajKutusu.style.color = "red";
+        mesajKutusu.innerText = "❌ Bir hata oluştu!";
+        mesajKutusu.style.display = "block";
+    }
+});
+
+// 4. SİHİR: Kurs Silme Fonksiyonu (Aynen duruyor)
+async function kursSil(id) {
+    if (!confirm("Bu kursu veri tabanından kalıcı olarak silmek istediğinize emin misiniz?")) {
+        return; 
+    }
+    try {
+        const response = await fetch(`/api/kurslar/${id}`, { method: 'DELETE' });
+        const sonuc = await response.json();
+        if (response.ok) {
+            alert("🎉 " + sonuc.message);
+            adminKurslariGetir(); 
+        } else {
+            alert("❌ Hata: " + sonuc.error);
+        }
+    } catch (error) {
+        alert("❌ Kurs silinirken bir bağlantı hatası oluştu!");
+    }
+}
+
+// Sayfa açıldığında kursları getir
+adminKurslariGetir();
+</script>
+<div style="max-width: 1200px; margin: 40px auto; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); font-family: sans-serif;">
+    <h2 style="color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 20px;">✉️ Gelen Veli Mesajları & Başvurular</h2>
+    
+    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+        <thead>
+            <tr style="background-color: #f1f5f9; color: #475569;">
+                <th style="padding: 12px; border-bottom: 2px solid #cbd5e1;">Ad Soyad</th>
+                <th style="padding: 12px; border-bottom: 2px solid #cbd5e1;">E-posta</th>
+                <th style="padding: 12px; border-bottom: 2px solid #cbd5e1;">Konu</th>
+                <th style="padding: 12px; border-bottom: 2px solid #cbd5e1;">Mesaj</th>
+                <th style="padding: 12px; border-bottom: 2px solid #cbd5e1;">Tarih</th>
+                <th style="padding: 12px; border-bottom: 2px solid #cbd5e1;">İşlem</th>
+            </tr>
+        </thead>
+        <tbody id="mesaj-tablo-vucut">
+            </tbody>
+    </table>
+</div>
+<div style="max-width: 1200px; margin: 40px auto; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); font-family: sans-serif;">
+    <h2 style="color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 20px;">🏅 Kayıtlı Veliler & Sertifika Onay Sistemi</h2>
+    <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 15px;">Kursu başarıyla tamamlayan öğrencilerin yanındaki butona basarak başarı sertifikasını onaylayabilirsiniz.</p>
+    
+    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+        <thead>
+            <tr style="background-color: #f1f5f9; color: #475569;">
+                <th style="padding: 12px; border-bottom: 2px solid #cbd5e1;">Veli Adı</th>
+                <th style="padding: 12px; border-bottom: 2px solid #cbd5e1;">Öğrenci Adı</th>
+                <th style="padding: 12px; border-bottom: 2px solid #cbd5e1;">E-posta</th>
+                <th style="padding: 12px; border-bottom: 2px solid #cbd5e1;">İşlem</th>
+            </tr>
+        </thead>
+        <tbody id="veli-tablo-vucut">
+            </tbody>
+    </table>
+</div>
+
+<script>
+    // Veri tabanındaki mesajları panele çeken fonksiyon
+    async function mesajlariGetir() {
+        try {
+            const response = await fetch('/api/mesajlar');
+            const mesajlar = await response.json();
+            const tabloVucut = document.getElementById('mesaj-tablo-vucut');
+            tabloVucut.innerHTML = '';
+
+            if(mesajlar.length === 0) {
+                tabloVucut.innerHTML = `<tr><td colspan="6" style="padding: 20px; text-align: center; color: #94a3b8;">Henüz gelen bir mesaj yok.</td></tr>`;
+                return;
+            }
+
+            mesajlar.forEach(m => {
+                const tarih = new Date(m.tarih).toLocaleString('tr-TR');
+                tabloVucut.innerHTML += `
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="padding: 12px; font-weight: bold; color: #0f172a;">${m.ad_soyad}</td>
+                        <td style="padding: 12px;">${m.e_posta}</td>
+                        <td style="padding: 12px; color: #0284c7;">${m.konu}</td>
+                        <td style="padding: 12px; max-width: 300px; white-space: pre-wrap;">${m.mesaj}</td>
+                        <td style="padding: 12px; font-size: 0.85rem; color: #64748b;">${tarih}</td>
+                        <td style="padding: 12px;">
+                            <button onclick="mesajSil(${m.id})" style="background-color: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Sil 🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        } catch (error) {
+            console.error('Mesajlar yüklenirken hata:', error);
+        }
+    }
+
+    // Okunan veya gereksiz mesajları silen fonksiyon
+    async function mesajSil(id) {
+        if (confirm('Bu mesajı silmek istediğinize emin misiniz?')) {
+            try {
+                const response = await fetch(`/api/mesajlar/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    mesajlariGetir(); // Listeyi güncelle
+                }
+            } catch (error) {
+                console.error('Silme hatası:', error);
+            }
+        }
+    }
+
+    // Sayfa açıldığında mesajları otomatik yükle
+    mesajlariGetir();
+    // Veri tabanındaki velileri panele çeken yeni fonksiyonumuz
+    async function velileriGetir() {
+        try {
+            const response = await fetch('/api/admin/kullanicilar');
+            const veliler = await response.json();
+            const tabloVucut = document.getElementById('veli-tablo-vucut');
+            tabloVucut.innerHTML = '';
+
+            if(veliler.length === 0) {
+                tabloVucut.innerHTML = `<tr><td colspan="4" style="padding: 20px; text-align: center; color: #94a3b8;">Henüz kayıtlı bir veli yok.</td></tr>`;
+                return;
+            }
+
+            veliler.forEach(v => {
+    const islemHucresi = v.sertifika_durumu === 1
+        ? `<span style="display:inline-flex; align-items:center; gap:6px; background-color:#dcfce7; color:#166534; padding:6px 12px; border-radius:4px; font-weight:bold;">✅ Tanımlandı</span>`
+        : `<button onclick="sertifikaOnayla(${v.id}, '${v.ogrenci_adi}')" style="background-color: #0056b3; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Sertifika Tanımla 🏅</button>`;
+
+    tabloVucut.innerHTML += `
+        <tr style="border-bottom: 1px solid #e2e8f0;">
+            <td style="padding: 12px; font-weight: bold; color: #0f172a;">${v.veli_adi}</td>
+            <td style="padding: 12px;">${v.ogrenci_adi}</td>
+            <td style="padding: 12px; color: #64748b;">${v.e_posta}</td>
+            <td style="padding: 12px;">
+                ${islemHucresi}
+            </td>
+        </tr>
+    `;
+});
+        } catch (error) {
+            console.error('Veliler yüklenirken hata:', error);
+        }
+    }
+
+    // Teyzen yeşil butona bastığında çalışacak sihirli fonksiyon
+    async function sertifikaOnayla(kullaniciId, ogrenciAdi) {
+        const veri = {
+            kullanici_id: kullaniciId,
+            sertifika_adi: "CodeBots Başarı Sertifikası" // Standart tek sertifika kararımız!
+        };
+
+        try {
+            const res = await fetch('/api/admin/sertifika-ekle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(veri)
+            });
+
+            if(res.ok) {
+    alert(`🎉 Başarılı! ${ogrenciAdi} isimli öğrenciye CodeBots Başarı Sertifikası tanımlandı.`);
+    velileriGetir();
+} else {
+                alert('❌ Sertifika tanımlanırken bir hata oluştu.');
+            }
+        } catch (error) {
+            console.error('Sertifika gönderim hatası:', error);
+        }
+    }
+
+    // Sayfa açıldığında veli listesini de otomatik doldur
+    velileriGetir();
+</script>
+
+<div class="container" style="max-width: 700px;">
+    <h2>Yeni İş Birliği / Referans Ekle</h2>
+    <p>Buradan eklediğiniz iş birliği anlık olarak veri tabanına yazılır ve ana sitede görünür.</p>
+
+    <form id="referansFormu" enctype="multipart/form-data">
+        <div class="form-group">
+            <label>Kurum Adı:</label>
+            <input type="text" id="ref_kurum_adi" required>
+        </div>
+
+        <div class="form-group">
+            <label>Kategori (örn: Eğitim Kurumu):</label>
+            <input type="text" id="ref_kategori" required>
+        </div>
+
+        <div class="form-group">
+            <label>Başlık:</label>
+            <input type="text" id="ref_baslik" required>
+        </div>
+
+        <div class="form-group">
+            <label>Açıklama:</label>
+            <textarea id="ref_aciklama" required></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Görsel (logo/fotoğraf):</label>
+            <input type="file" id="ref_gorsel" accept="image/*">
+            <small id="ref_gorsel_bilgi" style="color: #999; display: block; margin-top: 5px;"></small>
+        </div>
+
+        <button type="submit">✨ İş Birliğini Veri Tabanına Kaydet</button>
+    </form>
+
+    <div style="margin-top: 40px;">
+        <h3>Mevcut İş Birlikleri ve Yönetim</h3>
+        <div id="admin-referans-listesi" style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;"></div>
+    </div>
+
+    <div id="referansMesajKutusu" style="margin-top: 15px; font-weight: bold; display: none;"></div>
+</div>
+
+<script>
+let referansGuncellemeModu = false;
+let guncellenecekReferansId = null;
+
+async function adminReferanslariGetir() {
+    try {
+        const res = await fetch('/api/referanslar');
+        const referanslar = await res.json();
+
+        const liste = document.getElementById('admin-referans-listesi');
+        liste.innerHTML = '';
+
+        if (referanslar.length === 0) {
+            liste.innerHTML = '<p style="color: #999;">Henüz eklenmiş bir iş birliği bulunmuyor.</p>';
+            return;
+        }
+
+        referanslar.forEach(ref => {
+            liste.innerHTML += `
+                <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 10px; gap: 15px;">
+                    <img src="${ref.gorsel}" style="width: 60px; height: 60px; object-fit: contain; border-radius: 8px; background: white; border: 1px solid #e2e8f0;">
+                    <div style="flex: 1;">
+                        <strong style="font-size: 1.1rem; color: #333;">🏫 ${ref.kurum_adi}</strong>
+                        <span style="font-size: 0.85rem; background: #0056b3; color: white; padding: 2px 8px; border-radius: 12px; margin-left: 10px;">${ref.kategori}</span>
+                        <p style="margin: 5px 0 0 0; font-size: 0.9rem; color: #666;"><strong>${ref.baslik}</strong></p>
+                        <p style="margin: 3px 0 0 0; font-size: 0.85rem; color: #999;">${ref.aciklama}</p>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick='formaReferansBilgileriniDoldur(${JSON.stringify(ref)})' style="background: #ffc107; color: #212529; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                            ✍️ Düzenle
+                        </button>
+                        <button onclick="referansSil(${ref.id})" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                            🗑️ Sil
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+
+    } catch (error) {
+        console.error("İş birlikleri listelenirken hata oluştu:", error);
+    }
+}
+
+function formaReferansBilgileriniDoldur(ref) {
+    document.getElementById('ref_kurum_adi').value = ref.kurum_adi;
+    document.getElementById('ref_kategori').value = ref.kategori;
+    document.getElementById('ref_baslik').value = ref.baslik;
+    document.getElementById('ref_aciklama').value = ref.aciklama;
+
+    document.getElementById('ref_gorsel_bilgi').innerText = "Mevcut görsel korunacak. Değiştirmek istersen yeni bir dosya seç.";
+
+    referansGuncellemeModu = true;
+    guncellenecekReferansId = ref.id;
+
+    const buton = document.querySelector('#referansFormu button');
+    buton.innerText = "💾 Değişiklikleri Kaydet";
+    buton.style.background = "#28a745";
+}
+
+document.getElementById('referansFormu').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData();
+    formData.append('kurum_adi', document.getElementById('ref_kurum_adi').value);
+    formData.append('kategori', document.getElementById('ref_kategori').value);
+    formData.append('baslik', document.getElementById('ref_baslik').value);
+    formData.append('aciklama', document.getElementById('ref_aciklama').value);
+
+    const dosya = document.getElementById('ref_gorsel').files[0];
+    if (dosya) {
+        formData.append('gorsel', dosya);
+    }
+
+    const mesajKutusu = document.getElementById('referansMesajKutusu');
+
+    let url = '/api/referanslar';
+    let metod = 'POST';
+
+    if (referansGuncellemeModu) {
+        url = `/api/referanslar/${guncellenecekReferansId}`;
+        metod = 'PUT';
+    } else if (!dosya) {
+        mesajKutusu.style.color = "red";
+        mesajKutusu.innerText = "❌ Lütfen bir görsel seçin!";
+        mesajKutusu.style.display = "block";
+        return;
+    }
+
+    try {
+        const response = await fetch(url, {
+            method: metod,
+            body: formData
+        });
+
+        const sonuc = await response.json();
+
+        if (response.ok) {
+            mesajKutusu.style.color = "green";
+            mesajKutusu.innerText = "🎉 " + sonuc.message;
+            mesajKutusu.style.display = "block";
+
+            document.getElementById('referansFormu').reset();
+            document.getElementById('ref_gorsel_bilgi').innerText = "";
+            referansGuncellemeModu = false;
+            guncellenecekReferansId = null;
+
+            const buton = document.querySelector('#referansFormu button');
+            buton.innerText = "✨ İş Birliğini Veri Tabanına Kaydet";
+            buton.style.background = "#0056b3";
+
+            adminReferanslariGetir();
+        } else {
+            throw new Error(sonuc.error);
+        }
+
+    } catch (error) {
+        mesajKutusu.style.color = "red";
+        mesajKutusu.innerText = "❌ Bir hata oluştu!";
+        mesajKutusu.style.display = "block";
+    }
+});
+
+async function referansSil(id) {
+    if (!confirm("Bu iş birliğini veri tabanından kalıcı olarak silmek istediğinize emin misiniz?")) {
+        return;
+    }
+    try {
+        const response = await fetch(`/api/referanslar/${id}`, { method: 'DELETE' });
+        const sonuc = await response.json();
+        if (response.ok) {
+            alert("🎉 " + sonuc.message);
+            adminReferanslariGetir();
+        } else {
+            alert("❌ Hata: " + sonuc.error);
+        }
+    } catch (error) {
+        alert("❌ İş birliği silinirken bir bağlantı hatası oluştu!");
+    }
+}
+
+adminReferanslariGetir();
+</script>
+
+</body>
+</html>

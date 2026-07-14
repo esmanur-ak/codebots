@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeBots Bilişim Akademi Robotik ve Kodlama Ofisi</title>
+    <style>
+        /* GENEL AYARLAR */
+        html {
+            scroll-behavior: smooth;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+
+        /* 1. BÖLÜM: ÜST MENÜ (NAVBAR) */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #ffffff;
+            padding: 15px 5%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-links a {
+            position: relative;
+            color: #475569;
+            text-decoration: none;
+            margin-right: 20px;
+            font-weight: 600;
+            padding-bottom: 4px;
+            transition: color 0.2s;
+        }
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -2px;
+            width: 0;
+            height: 2px;
+            background: #0056b3;
+            transition: width 0.25s ease;
+        }
+        .nav-links a:hover {
+            color: #0056b3;
+        }
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+        .btn-giriş {
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .btn-giriş:hover {
+            background-color: #004494;
+        }
+
+        /* 2. BÖLÜM: HERO ALANI (4 BÜYÜK KUTU) */
+        .hero-section {
+            background: linear-gradient(rgba(240, 244, 248, 0.95), rgba(240, 244, 248, 0.95)), 
+                        url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80');
+            background-size: cover;
+            background-position: center;
+            padding: 60px 5%;
+        }
+
+        .grid-konteyner {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .taslak-kutu {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            border-left: 5px solid #0056b3;
+            transition: transform 0.2s;
+        }
+        .taslak-kutu:hover {
+            transform: translateY(-5px);
+        }
+        .taslak-kutu h2 {
+            margin-top: 0;
+            color: #0056b3;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        .taslak-kutu p {
+            line-height: 1.6;
+            font-size: 0.95rem;
+            margin: 0;
+            text-align: justify;
+        }
+        .taslak-kutu ul {
+            margin: 0;
+            padding-left: 20px;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+        .taslak-kutu li {
+            margin-bottom: 8px;
+        }
+
+        .resim-kutusu {
+            background-image: url('https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=600&q=80');
+            background-size: cover;
+            background-position: center;
+            border-left: none;
+            min-height: 220px;
+        }
+
+        /* 3. BÖLÜM: KURSLAR BÖLÜMÜ */
+        .kurslar-section {
+            padding: 60px 5%;
+            max-width: 1200px;
+            margin: 0 auto;
+            scroll-margin-top: 80px;
+        }
+        .section-baslik {
+            text-align: center;
+            color: #0f172a;
+            font-size: 2rem;
+            margin-bottom: 40px;
+        }
+
+        .kurs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .kurs-kart {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+
+            /* 🎯 1. DOKUNUŞ: Kartın büyüme hareketinin yumuşacık ve pürüzsüz olması için transition ekledik */
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            cursor: pointer; /* Üzerine gelince el işareti çıksın */
+        }
+
+        /* 🎯 2. DOKUNUŞ: Fareyle kurs kartının üzerine gelindiğinde (hover olunca) ne olacağını yazdık */
+        .kurs-kart:hover {
+            transform: scale(1.03); /* Kartı tatlı bir oranda (%3) büyütüyoruz */
+            box-shadow: 0 12px 24px rgba(0,0,0,0.12); /* Gölgeyi derinleştirip havaya kalkma efekti veriyoruz */
+        }
+        .kurs-gorsel {
+            height: 180px;
+            background-color: #e2e8f0;
+            background-image: url('https://images.unsplash.com/photo-1561557944-6e7860d1a7eb?auto=format&fit=crop&w=400&q=80');
+            background-size: cover;
+            background-position: center;
+        }
+        .kurs-icerik {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex-grow: 1;
+        }
+        .kurs-baslik {
+            font-size: 1.3rem;
+            margin: 0;
+            color: #0f172a;
+        }
+        .kurs-yas {
+            display: inline-block;
+            background-color: #e0f2fe;
+            color: #0369a1;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            align-self: flex-start;
+        }
+        .kurs-aciklama {
+            color: #64748b;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        /* --- MOBİL UYUMLULUK KODLARI --- */
+/* Mobilde linklerin açılıp kapanmasını sağlayan yardımcı sınıf */
+.nav-links.active {
+    display: flex !important;
+}
+
+@media (max-width: 768px) {
+    /* Hamburger butonunu mobilde görünür yap */
+    .hamburger-menu {
+        display: block !important;
+        margin-left: auto;
+        margin-right: 15px;
+    }
+
+    /* Linkleri mobilde başlangıçta gizle ve dikey kutu yap */
+    .nav-links {
+        display: none !important; /* Tıklanana kadar gizli */
+        position: absolute;
+        top: 70px; /* Navbar'ın hemen altına hizala */
+        left: 0;
+        width: 100%;
+        background-color: white;
+        flex-direction: column !important;
+        gap: 15px !important;
+        padding: 20px 0 !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        z-index: 999;
+        margin: 0 !important;
+    }
+
+    .nav-links a {
+        text-align: center;
+        width: 100%;
+        padding: 10px 0;
+    }
+
+    /* Profilim butonunu mobilde biraz küçültüp konumlandır */
+    #profil-auth-btn {
+        padding: 8px 16px !important;
+        font-size: 0.9rem !important;
+    }
+/* 4. Grid yapısını mobilde tek sütuna düşür */
+    .grid-konteyner {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 20px !important;
+        padding: 10px !important;
+    }
+
+    /* 5. Kutuların genişliğini mobilde tam ekran yap */
+    .taslak-kutu {
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    /* 6. Eğer resim kutusu mobilde boş veya çok küçük kalıyorsa min-yükseklik ver */
+    .resim-kutusu {
+        min-height: 250px !important;
+        background-size: cover !important;
+        background-position: center !important;
+    }
+    /* 7. Kurslar Grid Yapısını Mobilde Tek Sütun Yap */
+    .kurs-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 20px !important;
+        padding: 10px !important;
+    }
+
+    /* Kurs dinamik kartlarının genişliğini ayarla */
+    .kurs-grid > div {
+        width: 100% !important;
+        max-width: 350px !important;
+        box-sizing: border-box;
+    }
+
+    /* 8. İş Birlikleri (Referanslar) Alanını Esnekleştir */
+    #referanslar {
+        margin: 20px auto !important;
+        padding: 20px 10px !important;
+    }
+
+    #referanslar h2 {
+        font-size: 1.6rem !important; /* Başlığı mobilde biraz küçültüyoruz */
+    }
+
+    /* Referans kart kutularının 350px sabit genişliğini mobilde esnet */
+    #referanslar div[style*="width: 350px"] {
+        width: 100% !important;
+        max-width: 350px !important;
+        box-sizing: border-box;
+    }
+    /* 9. Harita ve İletişim Alanı Mobil Düzenlemesi */
+    /* Haritanın (iframe veya Google Maps konteynerinin) dışarı taşmasını engeller */
+    #iletisim iframe, 
+    .hero-section iframe,
+    div[style*="Tatvan"] iframe,
+    iframe {
+        width: 100% !important;
+        height: 250px !important; /* Mobilde dikey yüksekliği biraz azaltıyoruz */
+        border-radius: 12px !important;
+    }
+
+    /* İletişim başlık yazı boyutunu mobilde dengeler */
+    #iletisim h2, 
+    div[style*="Birlikte hayata"] h2,
+    .navbar + div h2 {
+        font-size: 1.8rem !important;
+        line-height: 1.2 !important;
+    }
+
+    /* Sağ alttaki WhatsApp butonunun mobilde parmağa çok yakın/uzak olmamasını sağlar */
+    .whatsapp-butonu, 
+    a[href*="wa.me"], 
+    a[href*="whatsapp"] {
+        bottom: 20px !important;
+        right: 20px !important;
+        width: 50px !important;
+        height: 50px !important;
+    }
+}
+
+    </style>
+</head>
+<body>
+
+    <body>
+
+    <nav class="navbar">
+    <a href="#" style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
+    <img src="codebots-logo.png" alt="CodeBots Bilişim Akademi" style="height: 65px; object-fit: contain; display: block;">
+</a>
+
+    <button class="hamburger-menu" id="hamburger-btn" style="display: none; background: none; border: none; font-size: 2rem; cursor: pointer;">☰</button>
+
+    <div class="nav-links" id="nav-links-container" style="margin-left: auto; margin-right: 30px;">
+        <a href="#biz-kimiz">Biz Kimiz?</a>
+        <a href="#kurslar">Kurslarımız</a>
+        <a href="#referanslar">İş Birliklerimiz</a>
+        <a href="#sertifikalar">Sertifikalar</a>
+        <a href="#iletisim">İletişim</a>
+    </div>
+
+    <a href="giris.html" id="profil-auth-btn" style="background-color: #0056b3; color: white; padding: 10px 22px; border-radius: 8px; font-weight: bold; text-decoration: none; font-size: 1rem; transition: all 0.3s;">
+        Profilim 
+    </a>
+</nav>
+
+    <!-- 2. BÖLÜM: HERO (ORİJİNAL AFİŞ METİNLERİ) -->
+    <div class="hero-section" id="biz-kimiz" style="scroll-margin-top: 80px;">
+        <div style="max-width: 1200px; margin: 0 auto 30px auto; display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 1.8rem;">🤖</span>
+            <div style="display: flex; flex-direction: column;">
+                <span style="font-size: 1.4rem; font-weight: 800; color: #0056b3; letter-spacing: -0.5px; line-height: 1.2;">CodeBots <span style="color: #0f172a;">Bilişim Akademi</span></span>
+                <span style="font-size: 0.85rem; font-weight: 600; color: #64748b; letter-spacing: 0.5px;">ROBOTİK VE KODLAMA OFİSİ</span>
+            </div>
+        </div>
+        <div class="grid-konteyner">
+            <div class="taslak-kutu">
+    <h2>Biz kimiz?</h2>
+    <p>Codebots Bilişim Akademi 2023 yılının nisan ayında <strong>Elektrik Elektronik Yüksek Mühendisi Makbule Elif Gök</strong> tarafından kuruldu. CodeBots Bilişim Akademi'de 4-17 yaş arasındaki çocuklara kendi yaşlarına ve seviyelerine özel hazırlanmış müfredatla robotik kodlama ve yazılım eğitimleri verilmektedir. Eğitimler bu alanda tecrübeli Elektrik Elektronik Mühendisleri tarafından verilmektedir.</p>
+</div>
+            
+            <div class="taslak-kutu">
+                <h2>Vizyonumuz nedir ?</h2>
+                <p>Codebots Bilişim Akademi, teknoloji çağı çocuklarına teknolojiyi faydalı kullanma konusunda rehberlik etmeyi ve çocukları bu teknoloji çağına donanımlı bir şekilde hazırlamayı amaçlamaktadır. Kendi mühendislik bilgi ve birikimlerini çocukların seviyesine uygun olarak robotik kodlama disiplini altında aktarmayı, çocuklarda mühendislik fikri ve isteği oluşturmayı hedeflemektedir.</p>
+            </div>
+            
+            <div class="taslak-kutu">
+                <h2>Robotik&Kodlama bize neler kazandırır?</h2>
+                <ul>
+                    <li>Analitik düşünmeyi geliştirir.</li>
+                    <li>El-göz koordinasyonunu güçlendirir.</li>
+                    <li>Problem çözme konusunda büyük katkı sağlar.</li>
+                    <li>Makinaların çalışma mantığını kavramaya yardımcı olur.</li>
+                    <li>Geniş STEM uygulamalarını bünyesinde barındırır.</li>
+                </ul>
+            </div>
+            <div class="taslak-kutu resim-kutusu"></div>
+        </div>
+    </div>
+
+    <!-- 3. BÖLÜM: KURSLAR -->
+    <div class="kurslar-section" id="kurslar">
+        <h2 class="section-baslik">Kurslarımız 🤖</h2>
+        <div id="kurs-listesi" class="kurs-grid"></div>
+    </div>
+
+<div style="display: flex; align-items: center; justify-content: center; gap: 16px; max-width: 480px; margin: 60px auto 0 auto;">
+    <div style="flex: 1; height: 1px; background: linear-gradient(to right, transparent, #cbd5e1);"></div>
+    <div style="width: 8px; height: 8px; border-radius: 50%; background: #0056b3; flex-shrink: 0;"></div>
+    <div style="flex: 1; height: 1px; background: linear-gradient(to left, transparent, #cbd5e1);"></div>
+</div>
+    <!-- ======================================================== -->
+    <!-- YENİ EKLENEN İŞ BİRLİKLERİMİZ & REFERANSLARIMIZ ALANI -->
+    <!-- ======================================================== -->
+<style>
+    #referanslar > div > div {
+        transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out !important;
+        cursor: pointer;
+    }
+    #referanslar > div > div:hover {
+        transform: scale(1.03) !important;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.08) !important;
+       @media (max-width: 600px) {
+    #is-birlikleri-baslik {
+        font-size: 0.85rem !important;
+        padding: 8px 16px !important;
+        border-radius: 10px !important;
+    }
+}
+    }
+</style>
+
+<div id="referanslar" style="display: block; clear: both; width: 100%; max-width: 1200px; margin: 60px auto; padding: 40px 20px; text-align: center; font-family: 'Segoe UI', Arial, sans-serif; scroll-margin-top: 80px;">
+        <span id="is-birlikleri-baslik" style="display: inline-block; background: #0056b3; color: #ffffff; font-weight: 800; font-size: 1.1rem; letter-spacing: 0.3px; padding: 10px 24px; border-radius: 14px; margin-bottom: 20px;">İş Birliklerimiz &amp; Güçlü Referanslarımız</span>
+        <p style="color: #64748b; font-size: 1.05rem; margin: 18px 0 50px 0; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6;">
+            CodeBots Bilişim Akademi olarak, geleceğin mühendislerini yetiştirmek için bölgenin en seçkin eğitim kurumlarıyla ortak projeler yürütüyoruz.
+        </p>
+
+        <div id="referans-listesi" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; margin-top: 20px;">
+            <p style="color: #94a3b8;">Yükleniyor...</p>
+        </div>
+    </div>
+
+<script>
+    async function referanslariGetir() {
+        try {
+            const res = await fetch('/api/referanslar');
+            const referanslar = await res.json();
+
+            const liste = document.getElementById('referans-listesi');
+            liste.innerHTML = '';
+
+            if (referanslar.length === 0) {
+                liste.innerHTML = '';
+                return;
+            }
+
+            // Etiketler için dönüşümlü renk şeması (mavi, yeşil, turuncu)
+            const renkler = [
+                { yazi: '#0056b3', zemin: '#e0f2fe' },
+                { yazi: '#15803d', zemin: '#dcfce7' },
+                { yazi: '#b45309', zemin: '#fef3c7' }
+            ];
+
+            referanslar.forEach((ref, i) => {
+                const renk = renkler[i % renkler.length];
+
+                liste.innerHTML += `
+                    <div style="background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid #e2e8f0; width: 350px; overflow: hidden; display: flex; flex-direction: column; text-align: left;">
+                        <div style="width: 100%; height: 220px; display: flex; align-items: center; justify-content: center; background: #ffffff; padding: 8px; box-sizing: border-box;">
+                            <img src="${ref.gorsel}" alt="${ref.kurum_adi}" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 12px;">
+                        </div>
+                        <div style="padding: 25px; display: flex; flex-direction: column; gap: 12px; background: #ffffff; border-top: 1px solid #f1f5f9;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="color: ${renk.yazi}; font-size: 0.75rem; font-weight: 700; background: ${renk.zemin}; padding: 6px 12px; border-radius: 6px; letter-spacing: 0.5px;">${ref.kurum_adi}</span>
+                                <span style="color: #94a3b8; font-size: 0.75rem; font-weight: 500;">${ref.kategori}</span>
+                            </div>
+                            <h3 style="color: #0f172a; font-size: 1.25rem; margin: 0; font-weight: 700; line-height: 1.3;">${ref.baslik}</h3>
+                            <p style="color: #64748b; font-size: 0.9rem; margin: 0; line-height: 1.5; text-align: justify;">
+                                ${ref.aciklama}
+                            </p>
+                        </div>
+                    </div>
+                `;
+            });
+
+        } catch (error) {
+            console.error("Referanslar çekilirken hata oluştu:", error);
+        }
+    }
+
+    referanslariGetir();
+</script>
+
+<!-- ======================================================== -->
+    <!-- TAM İSTEĞİNE GÖRE DÜZENLENMİŞ BAŞARI BELGESİ ALANI       -->
+    <!-- ======================================================== -->
+    <div id="sertifikalar" style="display: block; clear: both; width: 100%; background: transparent; color: #0f172a; padding: 60px 5%; box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; scroll-margin-top: 80px; margin-top: 20px;">
+        <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 60px; align-items: center;">
+            
+            <div style="flex: 1.2; min-width: 320px; text-align: left;">
+                <span style="color: #0056b3; font-size: 1.3rem; font-weight: 700; letter-spacing: 0.5px; display: inline-block; margin-bottom: 10px;">Geleceğin Mühendisleri İçin;</span>
+                <h2 style="font-size: 2.6rem; color: #0f172a; margin: 0 0 25px 0; font-weight: 800; line-height: 1.2; letter-spacing: -0.5px;">CodeBots Başarı Belgesi 🏅</h2>
+                
+                <p style="color: #475569; font-size: 1.1rem; line-height: 1.7; margin-bottom: 20px; text-align: justify;">
+                    CodeBots Bilişim Akademi'den mezun olan öğrencilerimiz, sadece bir kursu bitirmiş olmazlar; uluslararası standartlarda bir mühendislik vizyonu kazanırlar. Eğitim programlarimizi başariyla tamamlayan minik yazilimcilarimiza takdim ettiğimiz <strong>Başarı Sertifikaları</strong>, onların dijital dünyadaki ilk resmi başari nişanesidir.
+                </p>
+                <p style="color: #64748b; font-size: 1.05rem; line-height: 1.7; margin: 0; text-align: justify;">
+                    Bu sertifikalar; çocuklarin analitik düşünme, problem çözme ve algoritma kurma yetkinliklerini belgeleyerek ilerideki akademik yolculuklarinda onlara her zaman kapi açacak prestijli bir referans sunar.
+                </p>
+                <!-- Veli Giriş Teşvik ve Bilgilendirme Butonu -->
+                <div id="sertifika-durum-kutusu" 
+     style="display: inline-flex; align-items: center; gap: 10px; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 12px 20px; border-radius: 12px; font-size: 0.95rem; font-weight: 600; margin-top: 25px; box-shadow: 0 4px 12px rgba(30,64,175,0.03); cursor: pointer; transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;"
+     onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 8px 20px rgba(30,64,175,0.1)';"
+     onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(30,64,175,0.03)';">
+    
+    <span>🔒</span>
+    <span>Öğrencimizin dijital başarı belgesini görüntülemek ve indirmek için lütfen <a href="giris.html" style="color: #2563eb; text-decoration: underline; font-weight: 700;">Giriş</a> yapınız.</span>
+</div>
+            </div>
+
+            <div style="flex: 0.8; min-width: 320px; display: flex; flex-direction: column; gap: 30px;">
+                
+                <div style="border-left: 4px solid #0056b3; padding-left: 20px; text-align: left;">
+                    <h4 style="margin: 0 0 6px 0; color: #0f172a; font-size: 1.2rem; font-weight: 700;">Akademik Referans</h4>
+                    <p style="margin: 0; color: #64748b; font-size: 0.95rem; line-height: 1.5;">Okul projelerinde, bilim şenliklerinde ve gelecekteki eğitim başvurularında fark yaratır.</p>
+                </div>
+
+                <div style="border-left: 4px solid #10b981; padding-left: 20px; text-align: left;">
+                    <h4 style="margin: 0 0 6px 0; color: #0f172a; font-size: 1.2rem; font-weight: 700;">Somut Portfolyo Kanıtı</h4>
+                    <p style="margin: 0; color: #64748b; font-size: 0.95rem; line-height: 1.5;">Geliştirilen robotik projelerin ve kodlanan algoritmaların başarılarını resmileştirir.</p>
+                </div>
+
+                <div style="border-left: 4px solid #8b5cf6; padding-left: 20px; text-align: left;">
+                    <h4 style="margin: 0 0 6px 0; color: #0f172a; font-size: 1.2rem; font-weight: 700;">Yüksek Özgüven ve Motivasyon</h4>
+                    <p style="margin: 0; color: #64748b; font-size: 0.95rem; line-height: 1.5;">Üreten çocukların başarma duygusunu tadarak teknolojiye kararlılıkla devam etmesini sağlar.</p>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAM EKRAN (ENLEMESİNE TAM SAYFA) HARİTA ALANI            -->
+    <!-- ======================================================== -->
+    <div id="harita-alani" style="width: 100%; margin-top: 60px; padding: 0; box-sizing: border-box; line-height: 0;">
+        <!-- Filtresiz, orijinal renklerinde ve kenarları sıfıra sıfır tam ekran harita -->
+        <iframe 
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3122.4866995231305!2d42.2828379!3d38.499484700000004!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x400d39bcd8a14e0b%3A0x972440be577a9879!2sAtasun%20Optik!5e0!3m2!1str!2str!4v1783816653325!5m2!1str!2str" 
+            width="100%" 
+            height="400" 
+            style="border:0; display: block; width: 100%;" 
+            allowfullscreen="" 
+            loading="lazy" 
+            referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+    </div>
+
+    <!-- 4. BÖLÜM: İLETİŞİM (ORİJİNAL BROŞÜR BİLGİLERİ) -->
+    <section id="iletisim" style="background-color: #0f172a; color: white; padding: 60px 5%; margin-top: 0; scroll-margin-top: 80px; font-family: sans-serif;">
+        <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start; text-align: left;">
+            
+            <!-- Sol Taraf: İletişim Bilgileri -->
+            <div style="flex: 1; min-width: 300px;">
+                <h2 style="font-size: 2.2rem; color: white; margin-top: 0; margin-bottom: 10px; font-weight: bold; letter-spacing: 0.5px;">Birlikte hayata geçirelim.</h2>
+                <p style="color: #94a3b8; margin-bottom: 40px; font-size: 0.95rem;">Tüm iletişim ve bilgi taleplerinize en kısa sürede dönüş alabilirsiniz.</p>
+                
+                <div style="display: flex; flex-direction: column; gap: 24px; font-size: 0.95rem;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span style="font-size: 1.5rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">📍</span>
+                        <div>
+                            <strong style="display: block; color: #94a3b8; font-size: 0.75rem; letter-spacing: 1px;">ADRES</strong>
+                            <span style="color: #cbd5e1;">Cumhuriyet caddesi- Atasun Optik Üstü 6. kat Tatvan / BİTLİS</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span style="font-size: 1.5rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">📞</span>
+                        <div>
+                            <strong style="display: block; color: #94a3b8; font-size: 0.75rem; letter-spacing: 1px;">TELEFON</strong>
+                            <span style="color: #cbd5e1;">0553 161 47 14</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span style="font-size: 1.5rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">✉️</span>
+                        <div>
+                            <strong style="display: block; color: #94a3b8; font-size: 0.75rem; letter-spacing: 1px;">E-POSTA</strong>
+                            <span style="color: #cbd5e1;">info@codebotsakademi.com</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span style="font-size: 1.5rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">📸</span>
+                        <div>
+                            <strong style="display: block; color: #94a3b8; font-size: 0.75rem; letter-spacing: 1px;">INSTAGRAM</strong>
+                            <span style="color: #cbd5e1;">@codebots.bilisimakademi</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 50px; border-top: 1px solid #334155; padding-top: 20px;">
+                    <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 5px; font-style: italic;">Designed & Developed by AK</p>
+                    <p style="font-size: 0.85rem; color: #64748b; margin-top: 0;">&copy; 2026 CodeBots - Tüm Hakları Saklıdır.</p>
+                </div>
+            </div>
+
+            <!-- Sağ Taraf: Mesaj Gönder Formu -->
+            <div style="flex: 1; min-width: 300px; background: rgba(255, 255, 255, 0.02); border: 1px solid #334155; padding: 30px; border-radius: 166px; border-radius: 16px;">
+                <form id="iletisimFormu" onsubmit="mesajGonder(event)" style="display: flex; flex-direction: column; gap: 20px;">
+                    <div style="display: flex; flex-wrap: wrap; margin: 0 -10px;">
+                        <div style="flex: 1; min-width: 200px; padding: 0 10px; margin-bottom: 20px;">
+                            <label style="display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 8px;">Ad Soyad</label>
+                            <input type="text" id="ad_soyad" required style="width: 100%; background: #0f172a; border: 1px solid #334155; padding: 12px; border-radius: 8px; color: white; outline: none; box-sizing: border-box;">
+                        </div>
+                        <div style="flex: 1; min-width: 200px; padding: 0 10px; margin-bottom: 20px;">
+                            <label style="display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 8px;">E-posta</label>
+                            <input type="email" id="e_posta" required style="width: 100%; background: #0f172a; border: 1px solid #334155; padding: 12px; border-radius: 8px; color: white; outline: none; box-sizing: border-box;">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 8px;">Konu</label>
+                        <input type="text" id="konu" required style="width: 100%; background: #0f172a; border: 1px solid #334155; padding: 12px; border-radius: 8px; color: white; outline: none;">
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 8px;">Mesajınız</label>
+                        <textarea id="mesaj" rows="4" required style="width: 100%; background: #0f172a; border: 1px solid #334155; padding: 12px; border-radius: 8px; color: white; outline: none; resize: none;"></textarea>
+                    </div>
+                    
+                    <button type="submit" style="background: #38bdf8; color: #0f172a; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 1rem;">
+                        Mesajı gönder ➔
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </section>
+    
+
+    <!-- Verileri MySQL backend'e uçuran fonksiyon -->
+    <script>
+    async function mesajGonder(event) {
+        event.preventDefault();
+        
+        const veri = {
+            ad_soyad: document.getElementById('ad_soyad').value,
+            e_posta: document.getElementById('e_posta').value,
+            konu: document.getElementById('konu').value,
+            mesaj: document.getElementById('mesaj').value
+        };
+
+        try {
+            const response = await fetch('/api/mesajlar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(veri)
+            });
+
+            if (response.ok) {
+                alert('Mesajınız başarıyla veri tabanına kaydedildi!');
+                document.getElementById('iletisimFormu').reset();
+            } else {
+                alert('Mesaj kaydedilirken bir hata oluştu.');
+            }
+        } catch (error) {
+            console.error('Hata:', error);
+            alert('Sunucuyla bağlantı kurulamadı.');
+        }
+    }
+    </script>
+
+    <!-- JAVASCRIPT KODU -->
+    <script>
+        async function cursorGetir() {
+            try {
+                const response = await fetch('/api/kurslar');
+                const pools = await response.json();
+
+                const listeDiv = document.getElementById('kurs-listesi');
+                listeDiv.innerHTML = ''; 
+
+                pools.forEach(kurs => {
+                    listeDiv.innerHTML += `
+                        <div class="kurs-kart">
+                            <div class="kurs-gorsel"></div>
+                            <div class="kurs-icerik">
+                                <h3 class="kurs-baslik">🚀 ${kurs.kurs_adi}</h3>
+                                <span class="kurs-yas">${kurs.yas_grubu}</span>
+                                <p class="kurs-aciklama">${kurs.aciklama}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                console.error("Kurslar çekilirken hata oluştu:", error);
+                document.getElementById('kurs-listesi').innerHTML = "<p>Kurslar şu an yüklenemedi.</p>";
+            }
+        }
+
+        cursorGetir();
+    </script>
+
+<!-- WhatsApp Buton -->
+<a href="https://wa.me/905531614714?text=Merhaba,%20CodeBots%20Bilişim%20Akademi%20Eğitimleri%20hakkında%20bilgi%20alabilir%20miyim?!" 
+   class="whatsapp-float" 
+   target="_blank" 
+   rel="noopener noreferrer"
+   aria-label="WhatsApp ile iletişime geç">
+  <svg viewBox="0 0 32 32" width="32" height="32" fill="white">
+    <path d="M16.001 3.2c-7.06 0-12.8 5.74-12.8 12.8 0 2.26.6 4.46 1.73 6.4L3.2 28.8l6.58-1.73a12.75 12.75 0 0 0 6.22 1.6h.005c7.06 0 12.8-5.74 12.8-12.8s-5.74-12.67-12.804-12.67zm0 23.4a10.6 10.6 0 0 1-5.4-1.48l-.39-.23-4.02 1.06 1.07-3.92-.25-.4a10.6 10.6 0 0 1-1.63-5.63c0-5.87 4.78-10.65 10.65-10.65a10.6 10.6 0 0 1 7.53 3.12 10.6 10.6 0 0 1 3.12 7.54c0 5.87-4.78 10.65-10.65 10.65zm5.84-7.97c-.32-.16-1.89-.93-2.18-1.04-.29-.11-.51-.16-.72.16-.21.32-.83 1.04-1.02 1.25-.19.21-.38.24-.7.08-.32-.16-1.34-.5-2.56-1.6-.95-.85-1.58-1.9-1.77-2.22-.19-.32-.02-.49.14-.65.14-.14.32-.38.48-.56.16-.19.21-.32.32-.53.11-.21.05-.4-.03-.56-.08-.16-.72-1.74-.99-2.38-.26-.63-.52-.54-.72-.55l-.61-.01c-.21 0-.56.08-.85.4-.29.32-1.11 1.08-1.11 2.65s1.14 3.08 1.29 3.29c.16.21 2.24 3.41 5.42 4.78.76.33 1.35.53 1.81.67.76.24 1.45.21 2 .13.61-.09 1.89-.77 2.16-1.52.27-.75.27-1.38.19-1.52-.08-.13-.29-.21-.61-.37z"/>
+  </svg>
+</a>
+
+<style>
+  .whatsapp-float {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #25D366;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 1000;
+    transition: transform 0.2s ease-in-out;
+    text-decoration: none;
+  }
+
+  .whatsapp-float:hover {
+    transform: scale(1.1);
+  }
+
+  @media (max-width: 480px) {
+    .whatsapp-float {
+      width: 50px;
+      height: 50px;
+      bottom: 15px;
+      right: 15px;
+    }
+    .whatsapp-float svg {
+      width: 26px;
+      height: 26px;
+    }
+  }
+</style>
+
+<!-- ======================================================== -->
+<!-- CODEBOTS SESSIONSTORAGE UYUMLU OTURUM MOTORU             -->
+<!-- ======================================================== -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    oturumDurumunuGuncelle();
+});
+
+function cerezOku(isim) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${isim}=`);
+    if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
+    return null;
+}
+
+function oturumDurumunuGuncelle() {
+    const profilBtn = document.getElementById("profil-auth-btn");
+    const sertifikaKutusu = document.getElementById("sertifika-durum-kutusu");
+    
+    const aktifOgrenci = sessionStorage.getItem("ogrenciAdi");
+
+    if (aktifOgrenci && profilBtn) {
+
+        const harf = aktifOgrenci.charAt(0).toUpperCase();
+
+        // Profil butonunu, isim yazan bir kapsüle ve tıklayınca açılan "Çıkış Yap" menüsüne dönüştürüyoruz
+        profilBtn.outerHTML = `
+            <div id="profil-avatar-kapsayici" style="position: relative;">
+                <div id="profil-avatar" style="display: flex; align-items: center; gap: 8px; background: #eff6ff; border: 1px solid #dbeafe; padding: 6px 14px 6px 6px; border-radius: 999px; cursor: pointer; user-select: none;">
+                    <div style="width: 30px; height: 30px; min-width: 30px; background: #0056b3; color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700;">
+                        ${harf}
+                    </div>
+                    <span style="font-size: 0.9rem; font-weight: 600; color: #1e293b; white-space: nowrap;">${aktifOgrenci}</span>
+                    <span style="font-size: 0.7rem; color: #64748b;">▾</span>
+                </div>
+                <div id="profil-menu" style="display: none; position: absolute; top: 52px; right: 0; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); padding: 8px; min-width: 150px; z-index: 200;">
+                    <a href="javascript:void(0);" id="cikis-yap-link" style="display: block; padding: 10px 12px; color: #ef4444; font-weight: 600; text-decoration: none; border-radius: 6px; font-size: 0.9rem; transition: background 0.15s;">Çıkış Yap 🚪</a>
+                </div>
+            </div>
+        `;
+
+        const avatar = document.getElementById("profil-avatar");
+        const menu = document.getElementById("profil-menu");
+        const cikisLink = document.getElementById("cikis-yap-link");
+
+        avatar.addEventListener("click", function(e) {
+            e.stopPropagation();
+            menu.style.display = (menu.style.display === "none") ? "block" : "none";
+        });
+
+        cikisLink.addEventListener("mouseover", function() {
+            cikisLink.style.background = "#fef2f2";
+        });
+        cikisLink.addEventListener("mouseout", function() {
+            cikisLink.style.background = "transparent";
+        });
+
+        // Menü dışına tıklanınca kapansın
+        document.addEventListener("click", function() {
+            menu.style.display = "none";
+        });
+
+        cikisLink.addEventListener("click", function() {
+            sessionStorage.clear();
+            window.location.reload();
+        });
+
+        // 3. Sertifika alanını güncelle
+       // 3. Sertifika alanını güncelle (artık gerçek veritabanı durumuna bakıyor)
+        if (sertifikaKutusu) {
+            const ogrenciId = sessionStorage.getItem("ogrenciId");
+
+            if (!ogrenciId) {
+                // id yoksa eski mesajı göster (güvenlik/uyum amaçlı)
+                sertifikaKutusu.innerHTML = `
+                    <div style="background: #eff6ff; border: 1px solid #3b82f6; padding: 40px; border-radius: 20px; text-align:center; color: #1e40af;">
+                        <span style="font-size: 3rem;">⏳</span>
+                        <h3 style="font-size: 1.5rem; margin: 15px 0 10px 0; font-weight: 700;">Sertifikanız Hazırlanıyor</h3>
+                        <p style="margin: 0; font-size: 0.95rem; line-height: 1.6;">
+                            Merhaba <strong>${aktifOgrenci}</strong>, eğitim süreciniz ve başarı kriterleriniz eğitmenlerimiz tarafından inceleniyor.
+                        </p>
+                    </div>
+                `;
+            } else {
+                fetch(`/api/sertifika-durumu/${ogrenciId}`)
+                    .then(res => res.json())
+                    .then(veri => {
+                        if (veri.hazir) {
+                            // Sertifika hazır! İndirme kutusunu göster
+                            sertifikaKutusu.innerHTML = `
+                                <div style="background: #fffbeb; border: 1px solid #f59e0b; padding: 40px; border-radius: 20px; text-align:center; color: #92400e;">
+                                    <span style="font-size: 3rem;">🏅</span>
+                                    <h3 style="font-size: 1.5rem; margin: 15px 0 10px 0; font-weight: 700;">Tebrikler, ${aktifOgrenci}!</h3>
+                                    <p style="margin: 0 0 20px 0; font-size: 0.95rem; line-height: 1.6;">
+                                        CodeBots Başarı Sertifikanız hazır. Sertifika No: <strong>${veri.sertifikaNo}</strong>
+                                    </p>
+                                    <a href="${veri.sertifikaUrl}" download
+                                       style="display:inline-block; background:#0056b3; color:#ffffff; font-weight:700; padding:12px 24px; border-radius:10px; text-decoration:none;">
+                                        Sertifikamı İndir 🎉
+                                    </a>
+                                </div>
+                            `;
+                        } else {
+                            // Henüz hazır değil, eski bekleme mesajını göster
+                            sertifikaKutusu.innerHTML = `
+                                <div style="background: #eff6ff; border: 1px solid #3b82f6; padding: 40px; border-radius: 20px; text-align:center; color: #1e40af;">
+                                    <span style="font-size: 3rem;">⏳</span>
+                                    <h3 style="font-size: 1.5rem; margin: 15px 0 10px 0; font-weight: 700;">Sertifikanız Hazırlanıyor</h3>
+                                    <p style="margin: 0; font-size: 0.95rem; line-height: 1.6;">
+                                        Merhaba <strong>${aktifOgrenci}</strong>, eğitim süreciniz ve başarı kriterleriniz eğitmenlerimiz tarafından inceleniyor. <br>
+                                        Akademik başarı belgeniz kurslarımızı başarıyla tamamladıktan sonra bu panelde parıldayacak! Takipte kalın. 🚀 <br>
+                                        Aktif kursunuz yoksa kurslarımıza göz atın!
+                                    </p>
+                                </div>
+                            `;
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Sertifika durumu alınamadı:', err);
+                    });
+            }
+        }
+    }
+}
+</script>
+<script>
+   const hamburgerBtn = document.getElementById('hamburger-btn');
+const navLinksContainer = document.getElementById('nav-links-container');
+
+hamburgerBtn.addEventListener('click', () => {
+    navLinksContainer.classList.toggle('active');
+});
+
+// Bir menü linkine tıklanınca menüyü otomatik kapat
+const menuLinkleri = navLinksContainer.querySelectorAll('a');
+menuLinkleri.forEach(link => {
+    link.addEventListener('click', () => {
+        navLinksContainer.classList.remove('active');
+    });
+});
+</script>
+<footer style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 60px 20px 30px 20px; font-family: 'Segoe UI', Arial, sans-serif;">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 40px; text-align: left;">
+        
+        <div style="flex: 1; min-width: 280px; max-width: 400px;">
+            <div style="display: inline-block; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px 14px; margin-bottom: 15px;">
+                <img src="codebots-logo.png" alt="CodeBots Bilişim Akademi" style="height: 50px; object-fit: contain; display: block;">
+            </div>
+            
+            <p style="color: #64748b; font-size: 0.95rem; line-height: 1.6; margin-bottom: 25px;">
+                Geleceğin mühendislerini ve mucitlerini yetiştirmek için yapay zeka, robotik kodlama ve çocuklara özel algoritma eğitimleri sunan bilişim akademisi.
+            </p>
+            
+            <div style="display: flex; gap: 12px;">
+                <a href="https://www.instagram.com/codebots.bilisimakademi" target="_blank" rel="noopener noreferrer" title="Instagram" style="width: 40px; height: 40px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #64748b; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.background='#eff6ff'; this.style.color='#e1306c';" onmouseout="this.style.background='#ffffff'; this.style.color='#64748b';">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                    </svg>
+                </a>
+                <a href="https://www.linkedin.com/in/makbule-elif-g%C3%B6k-b4b5b512b" target="_blank" rel="noopener noreferrer" title="LinkedIn" style="width: 40px; height: 40px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #64748b; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.background='#eff6ff'; this.style.color='#0077b5';" onmouseout="this.style.background='#ffffff'; this.style.color='#64748b';">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path>
+                    </svg>
+                </a>
+            </div>
+        </div>
+
+        <div style="min-width: 180px;">
+            <h4 style="color: #0f172a; font-size: 1rem; font-weight: 700; margin: 0 0 20px 0; text-transform: uppercase; letter-spacing: 0.5px;">Hizmetlerimiz</h4>
+            <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; font-size: 0.95rem;">
+                <li><a href="#kurslar" style="color: #64748b; text-decoration: none; font-weight: 500; transition: color 0.2s;" onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#64748b'">Kurslarımız</a></li>
+                <li><a href="#referanslar" style="color: #64748b; text-decoration: none; font-weight: 500; transition: color 0.2s;" onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#64748b'">Referanslarımız</a></li>
+                <li><a href="#sertifikalar" style="color: #64748b; text-decoration: none; font-weight: 500; transition: color 0.2s;" onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#64748b'">Sertifikamız</a></li>
+            </ul>
+        </div>
+
+        <div style="min-width: 250px;" id="iletisim">
+            <div style="display: inline-block; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 6px 10px; margin-bottom: 12px;">
+                <img src="codebots-logo.png" alt="CodeBots Bilişim Akademi" style="height: 36px; object-fit: contain; display: block;">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.95rem; font-weight: 600;">
+                <a href="#" style="color: #475569; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#475569'">Hakkımızda</a>
+                <a href="#iletisim" style="color: #475569; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#475569'">İletişim</a>
+            </div>
+        </div>
+
+    </div>
+
+    <div style="max-width: 1200px; margin: 50px auto 0 auto; padding-top: 25px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px; font-size: 0.85rem; color: #94a3b8;">
+        <span>© 2026 CodeBots Bilişim Akademi. All rights reserved.</span>
+        <span>Bitlis</span>
+    </div>
+</footer>
+
+</body>
+</html>

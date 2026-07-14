@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeBots - Veli & Öğrenci Paneli</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #0f172a;
+            color: white;
+            margin: 0;
+            padding: 40px;
+        }
+        .panel-konteyner {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .ust-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        h1 { color: #38bdf8; margin: 0; }
+        .btn-cikis {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .kart {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .sertifika-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .sertifika-kart {
+            background: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .sertifika-kart h4 { margin: 10px 0 5px 0; color: #38bdf8; }
+        .sertifika-kart p { font-size: 0.85rem; color: #94a3b8; margin: 0; }
+        .madalya { font-size: 2.5rem; }
+        .bos-mesaj { color: #94a3b8; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <div class="panel-konteyner">
+        <div class="ust-header">
+            <div>
+                <h1 id="veliSelam">Hoş geldiniz!</h1>
+                <p style="color: #94a3b8; margin: 5px 0 0 0;">Öğrenci: <strong id="ogrenciAd" style="color: white;">-</strong></p>
+            </div>
+            <button class="btn-cikis" onclick="cikisYap()">Çıkış Yap 🚪</button>
+        </div>
+
+        <div class="kart">
+            <h3>🏅 Kazanılan Başarı Sertifikaları</h3>
+            <p style="color: #94a3b8;">Çocuğunuzun eğitim dönemleri boyunca CodeBots bünyesinde kazandığı dijital sertifikalar aşağıda listelenmiştir.</p>
+            
+            <!-- Sertifikaların listeleneceği alan -->
+            <div id="sertifikaListesi" class="sertifika-grid">
+                <p class="bos-mesaj">Henüz yüklenmiş bir sertifika bulunmuyor. Teyzeniz yüklediğinde burada görünecek! 😊</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tarayıcı hafızasından giriş yapan velinin bilgilerini alalım
+        const veliAdi = sessionStorage.getItem('veliAdi');
+        const ogrenciAdi = sessionStorage.getItem('ogrenciAdi');
+
+        // Giriş yapmamışsa ana sayfaya fırlat
+        if (!veliAdi) {
+            window.location.href = 'giris.html';
+        } else {
+            document.getElementById('veliSelam').innerText = `Hoş geldiniz, ${veliAdi} 👋`;
+            document.getElementById('ogrenciAd').innerText = ogrenciAdi;
+            // İleride buraya veri tabanından çocuğun sertifikalarını çeken fetch fonksiyonunu ekleyeceğiz!
+        }
+
+        function cikisYap() {
+            sessionStorage.clear();
+            window.location.href = 'giris.html';
+        }
+    </script>
+</body>
+</html>

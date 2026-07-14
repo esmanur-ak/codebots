@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeBots - Veli Giriş & Kayıt Sistemi</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #0f172a;
+            color: white;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .form-konteyner {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid #334155;
+            padding: 40px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        h2 {
+            text-align: center;
+            margin-top: 0;
+            color: #38bdf8;
+        }
+        .input-grubu {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        label {
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+        input {
+            background: #0f172a;
+            border: 1px solid #334155;
+            padding: 12px;
+            border-radius: 8px;
+            color: white;
+            outline: none;
+            font-size: 1rem;
+        }
+        input:focus {
+            border-color: #38bdf8;
+        }
+        button {
+            background: #38bdf8;
+            color: #0f172a;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #0ea5e9;
+        }
+        .link-alanı {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+        .link-alanı span {
+            color: #38bdf8;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .gizli {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="form-konteyner">
+        <!-- GİRİŞ FORMU -->
+        <div id="girisKutusu">
+            <h2 style="color: #38bdf8; font-size: 1.8rem; margin-top: 0; margin-bottom: 20px; font-weight: 700; text-align: center;">Kayıt Formu 📝</h2>
+            <form id="girisFormu" onsubmit="handleGiris(event)">
+                <div class="input-grubu">
+                    <label>E-posta Adresi</label>
+                    <input type="email" id="giris_email" required>
+                </div>
+                <div class="input-grubu">
+                    <label>Şifre</label>
+                    <input type="password" id="giris_sifre" required>
+                </div>
+                <button type="submit">Giriş Yap</button>
+            </form>
+            <div class="link-alanı">
+                Hesabınız yok mu? <span onclick="formDegistir()">Kayıt Olun</span>
+            </div>
+        </div>
+
+        <!-- KAYIT FORMU -->
+        <div id="kayitKutusu" class="gizli">
+            <h2>Kayıt Formu 📝</h2>
+            <form id="kayitFormu" onsubmit="handleKayit(event)">
+                <div class="input-grubu">
+                    <label>Veli Ad Soyad</label>
+                    <input type="text" id="kayit_veli" required>
+                </div>
+                <div class="input-grubu">
+                    <label>Öğrenci Ad Soyad</label>
+                    <input type="text" id="kayit_ogrenci" required>
+                </div>
+                <div class="input-grubu">
+                    <label>E-posta Adresi</label>
+                    <input type="email" id="kayit_email" required>
+                </div>
+                <div class="input-grubu">
+                    <label>Şifre Belirleyin</label>
+                    <input type="password" id="kayit_sifre" required>
+                </div>
+                <button type="submit">Hesap Oluştur</button>
+            </form>
+            <div class="link-alanı">
+                Zaten hesabınız var mı? <span onclick="formDegistir()">Giriş Yapın</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function formDegistir() {
+            document.getElementById('girisKutusu').classList.toggle('gizli');
+            document.getElementById('kayitKutusu').classList.toggle('gizli');
+        }
+
+        // 1. KAYIT OLMA FONKSİYONU
+        async function handleKayit(e) {
+            e.preventDefault();
+            
+            const veri = {
+                veli_adi: document.getElementById('kayit_veli').value,
+                ogrenci_adi: document.getElementById('kayit_ogrenci').value,
+                e_posta: document.getElementById('kayit_email').value,
+                sifre: document.getElementById('kayit_sifre').value
+            };
+
+            try {
+                const response = await fetch('/api/kayit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(veri)
+                });
+
+                const sonuc = await response.json();
+
+                // GİRİŞ HTML İÇİNDEKİ HANDLEGİRİS FONKSİYONUNUN SONUNU BÖYLE GÜNCELLE:
+if (response.ok) {
+    alert(`Hoş geldiniz Sayın ${sonuc.veli_adi}! Giriş başarıyla sağlandı.`);
+    
+    // Senin mevcut session kayıtların kalıyor, ek olarak öğrencinin adını da net kaydedelim
+    sessionStorage.setItem('veliAdi', sonuc.veli_adi);
+    sessionStorage.setItem('ogrenciAdi', sonuc.ogrenci_adi);
+    sessionStorage.setItem('veliEmail', veri.e_posta);
+    
+    // İŞTE BURASI! veli.html yerine doğrudan ana sayfaya fırlatıyoruz:
+    window.location.href = '/'; 
+} else {
+                    alert(sonuc.error || 'Kayıt sırasında bir hata oluştu.');
+                }
+            } catch (error) {
+                console.error('Kayıt Hatası:', error);
+                alert('Sunucuyla bağlantı kurulamadı.');
+            }
+        }
+
+        // 2. GİRİŞ YAPMA FONKSİYONU
+        async function handleGiris(e) {
+            e.preventDefault();
+
+            const veri = {
+                e_posta: document.getElementById('giris_email').value,
+                sifre: document.getElementById('giris_sifre').value
+            };
+
+            try {
+                const response = await fetch('/api/giris', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(veri)
+                });
+
+                const sonuc = await response.json();
+
+                if (response.ok) {
+    alert(`Hoş geldiniz Sayın ${sonuc.veli_adi}! Giriş başarıyla sağlandı.`);
+    
+    sessionStorage.setItem('veliAdi', sonuc.veli_adi);
+    sessionStorage.setItem('ogrenciAdi', sonuc.ogrenci_adi);
+    sessionStorage.setItem('veliEmail', veri.e_posta); 
+    sessionStorage.setItem("ogrenciId", sonuc.id);
+    
+    // Tarayıcıyı doğrudan ana sayfaya (index.html) zorla gönderiyoruz:
+    window.location.replace('/'); 
+} else {
+                    alert(sonuc.error || 'E-posta veya şifre hatalı!');
+                }
+            } catch (error) {
+                console.error('Giriş Hatası:', error);
+                alert('Sunucuyla bağlantı kurulamadı.');
+            }
+        }
+    </script>
+</body>
+</html>
