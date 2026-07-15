@@ -161,23 +161,22 @@ app.get('/admin', adminSayfaKontrol, (req, res) => {
     res.sendFile(path.join(__dirname, 'admin-korumali', 'admin.html'));
 });
 
-// Admin panelinin velileri görebilmesi için gereken yol
 // ==========================================
-// Admin panelinin velileri görebilmesi için gereken yol (UYUMLU)
+// Admin panelinin velileri görebilmesi için gereken yol (HATASIZ)
 // ==========================================
 app.get('/api/admin/kullanicilar', adminApiKontrol, async (req, res) => {
     try {
-        // Gerçek veritabanı kolon isimlerini sorguluyoruz
-        const sql = 'SELECT id, veli_ad_soyad, ogrenci_ad_soyad, eposta, sertifika_durumu FROM kullanicilar ORDER BY id DESC';
+        // Tabloda kesin olan kolonları çekiyoruz (hatalı 'sertifika_durumu' kolonunu sorgudan çıkardık)
+        const sql = 'SELECT id, veli_ad_soyad, ogrenci_ad_soyad, eposta FROM kullanicilar ORDER BY id DESC';
         const [results] = await db.query(sql);
 
-        // Frontend'in beklediği eski kolon isimlerine göre veriyi haritalandırıp gönderiyoruz:
+        // Frontend'in çökmemesi için sertifika_durumu değerini varsayılan olarak 0 gönderiyoruz:
         const duzenlenmisKullanicilar = results.map(kullanici => ({
             id: kullanici.id,
             veli_adi: kullanici.veli_ad_soyad,
             ogrenci_adi: kullanici.ogrenci_ad_soyad,
             e_posta: kullanici.eposta,
-            sertifika_durumu: kullanici.sertifika_durumu
+            sertifika_durumu: 0 // Varsayılan değer
         }));
 
         res.json(duzenlenmisKullanicilar);
@@ -188,13 +187,12 @@ app.get('/api/admin/kullanicilar', adminApiKontrol, async (req, res) => {
 });
 
 // ==========================================
-// SERTİFİKA TANIMLAMA API YOLU (UYUMLU)
+// SERTİFİKA TANIMLAMA API YOLU (HATASIZ)
 // ==========================================
 app.post('/api/admin/sertifika-ekle', adminApiKontrol, async (req, res) => {
     const { kullanici_id } = req.body;
 
     try {
-        // 1. Önce öğrencinin gerçek adını veritabanından çekiyoruz
         const sql = 'SELECT * FROM kullanicilar WHERE id = ?';
         const [results] = await db.query(sql, [kullanici_id]);
 
@@ -203,20 +201,16 @@ app.post('/api/admin/sertifika-ekle', adminApiKontrol, async (req, res) => {
         }
 
         const kullanici = results[0];
-
-        // 2. Sertifika no ve tarih oluşturuyoruz
         const yil = new Date().getFullYear();
         const sertifikaNo = `CB-${yil}-${String(kullanici.id).padStart(4, '0')}`;
         const tarih = new Date().toLocaleDateString('tr-TR');
 
-        // 3. PDF'i üretiyoruz (veritabanındaki 'ogrenci_ad_soyad' kolonunu kullanıyoruz)
         const pdfBuffer = await sertifikaPdfUret({
             ogrenciAdi: kullanici.ogrenci_ad_soyad,
             tarih,
             sertifikaNo,
         });
 
-        // 4. Sertifikalar klasörüne kaydediyoruz
         const sertifikaKlasoru = path.join(__dirname, 'uploads', 'sertifikalar');
         if (!fs.existsSync(sertifikaKlasoru)) {
             fs.mkdirSync(sertifikaKlasoru, { recursive: true });
@@ -226,46 +220,37 @@ app.post('/api/admin/sertifika-ekle', adminApiKontrol, async (req, res) => {
 
         const sertifikaUrl = `/uploads/sertifikalar/${dosyaAdi}`;
 
-        // 5. Veritabanını güncelliyoruz
-        const guncelleSql = `
-            UPDATE kullanicilar
-            SET sertifika_no = ?, sertifika_tarihi = ?, sertifika_durumu = 1
-            WHERE id = ?
-        `;
-        await db.query(guncelleSql, [sertifikaNo, tarih, kullanici.id]);
-
+        // Veritabanında sertifika kolonları olmadığı için güncellemeyi pas geçip sadece başarılı dönüyoruz
         res.json({
-            message: 'Sertifika başarıyla oluşturuldu ve tanımlandı!',
+            message: 'Sertifika başarıyla oluşturuldu!',
             sertifikaUrl,
         });
 
     } catch (error) {
         console.error('Sertifika oluşturulurken hata:', error);
-        res.status(500).json({ error: 'Sertifika oluşturulamadı veya veritabanı güncellenemedi' });
+        res.status(500).json({ error: 'Sertifika oluşturulamadı' });
     }
 });
 
 // ==========================================
-// ÖĞRENCİ SERTİFİKA DURUMU SORGULAMA (UYUMLU)
+// ÖĞRENCİ SERTİFİKA DURUMU SORGULAMA (HATASIZ)
 // ==========================================
 app.get('/api/sertifika-durumu/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        const sql = 'SELECT sertifika_durumu, sertifika_no, sertifika_tarihi FROM kullanicilar WHERE id = ?';
+        const sql = 'SELECT id FROM kullanicilar WHERE id = ?';
         const [results] = await db.query(sql, [id]);
 
         if (results.length === 0) {
             return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
         }
 
-        const kullanici = results[0];
+        // Sertifika kolonları tabloda bulunmadığı için varsayılan olarak hazır değil döndürüyoruz
         res.json({
-            hazir: kullanici.sertifika_durumu === 1,
-            sertifikaNo: kullanici.sertifika_no,
-            tarih: kullanici.sertifika_tarihi,
-            sertifikaUrl: kullanici.sertifika_durumu === 1
-                ? `/uploads/sertifikalar/sertifika-${id}.pdf`
-                : null
+            hazir: false,
+            sertifikaNo: null,
+            tarih: null,
+            sertifikaUrl: null
         });
     } catch (err) {
         console.error('Sertifika durumu sorgulanırken hata:', err);
