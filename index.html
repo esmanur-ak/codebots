@@ -1262,20 +1262,23 @@ function sertifikayiYazdir(ogrenciAdi, sertifikaNo) {
     };
 }
 </script>
-   const hamburgerBtn = document.getElementById('hamburger-btn');
-const navLinksContainer = document.getElementById('nav-links-container');
-
-hamburgerBtn.addEventListener('click', () => {
-    navLinksContainer.classList.toggle('active');
-});
-
-// Bir menü linkine tıklanınca menüyü otomatik kapat
-const menuLinkleri = navLinksContainer.querySelectorAll('a');
-menuLinkleri.forEach(link => {
-    link.addEventListener('click', () => {
-        navLinksContainer.classList.remove('active');
+<script>
+  const hamburgerBtn = document.getElementById('hamburger-btn');
+  const navLinksContainer = document.getElementById('nav-links-container'); 
+  
+  if (hamburgerBtn && navLinksContainer) {
+    hamburgerBtn.addEventListener('click', () => {
+      navLinksContainer.classList.toggle('active'); 
+    }); 
+    
+    // Bir menü linkine tıklanınca menüyü otomatik kapat 
+    const menuLinkleri = navLinksContainer.querySelectorAll('a'); 
+    menuLinkleri.forEach(link => {
+      link.addEventListener('click', () => { 
+        navLinksContainer.classList.remove('active'); 
+      }); 
     });
-});
+  }
 </script>
 <footer style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 60px 20px 30px 20px; font-family: 'Segoe UI', Arial, sans-serif;">
     <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 40px; text-align: left;">
