@@ -828,99 +828,89 @@ function oturumDurumunuGuncelle() {
     const aktifOgrenci = sessionStorage.getItem("ogrenciAdi");
 
     if (aktifOgrenci && profilBtn) {
-
         const harf = aktifOgrenci.charAt(0).toUpperCase();
 
         // Profil butonunu, isim yazan bir kapsüle ve tıklayınca açılan "Çıkış Yap" menüsüne dönüştürüyoruz
-        profilBtn.outerHTML = `
-            <div id="profil-avatar-kapsayici" style="position: relative;">
-                <div id="profil-avatar" style="display: flex; align-items: center; gap: 8px; background: #eff6ff; border: 1px solid #dbeafe; padding: 6px 14px 6px 6px; border-radius: 999px; cursor: pointer; user-select: none;">
-                    <div style="width: 30px; height: 30px; min-width: 30px; background: #0056b3; color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700;">
-                        ${harf}
-                    </div>
-                    <span style="font-size: 0.9rem; font-weight: 600; color: #1e293b; white-space: nowrap;">${aktifOgrenci}</span>
-                    <span style="font-size: 0.7rem; color: #64748b;">▾</span>
-                </div>
-                <div id="profil-menu" style="display: none; position: absolute; top: 52px; right: 0; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); padding: 8px; min-width: 150px; z-index: 200;">
-                    <a href="javascript:void(0);" id="cikis-yap-link" style="display: block; padding: 10px 12px; color: #ef4444; font-weight: 600; text-decoration: none; border-radius: 6px; font-size: 0.9rem; transition: background 0.15s;">Çıkış Yap 🚪</a>
-                </div>
-            </div>
-        `;
+        profilBtn.outerHTML = '<div id="profil-avatar-kapsayici" style="position: relative;">' +
+            '<div id="profil-avatar" style="display: flex; align-items: center; gap: 8px; background: #eff6ff; border: 1px solid #dbeafe; padding: 6px 14px 6px 6px; border-radius: 999px; cursor: pointer; user-select: none;">' +
+                '<div style="width: 30px; height: 30px; min-width: 30px; background: #0056b3; color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700;">' +
+                    harf +
+                '</div>' +
+                '<span style="font-size: 0.9rem; font-weight: 600; color: #1e293b; white-space: nowrap;">' + aktifOgrenci + '</span>' +
+                '<span style="font-size: 0.7rem; color: #64748b;">▾</span>' +
+            '</div>' +
+            '<div id="profil-menu" style="display: none; position: absolute; top: 52px; right: 0; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); padding: 8px; min-width: 150px; z-index: 200;">' +
+                '<a href="javascript:void(0);" id="cikis-yap-link" style="display: block; padding: 10px 12px; color: #ef4444; font-weight: 600; text-decoration: none; border-radius: 6px; font-size: 0.9rem; transition: background 0.15s;">Çıkış Yap 🚪</a>' +
+            '</div>' +
+        '</div>';
 
         const avatar = document.getElementById("profil-avatar");
         const menu = document.getElementById("profil-menu");
         const cikisLink = document.getElementById("cikis-yap-link");
 
-        avatar.addEventListener("click", function(e) {
-            e.stopPropagation();
-            menu.style.display = (menu.style.display === "none") ? "block" : "none";
-        });
+        if (avatar && menu) {
+            avatar.addEventListener("click", function(e) {
+                e.stopPropagation();
+                menu.style.display = (menu.style.display === "none") ? "block" : "none";
+            });
+        }
 
-        cikisLink.addEventListener("mouseover", function() {
-            cikisLink.style.background = "#fef2f2";
-        });
-        cikisLink.addEventListener("mouseout", function() {
-            cikisLink.style.background = "transparent";
-        });
+        if (cikisLink) {
+            cikisLink.addEventListener("mouseover", function() {
+                cikisLink.style.background = "#fef2f2";
+            });
+            cikisLink.addEventListener("mouseout", function() {
+                cikisLink.style.background = "transparent";
+            });
+            cikisLink.addEventListener("click", function() {
+                sessionStorage.clear();
+                window.location.reload();
+            });
+        }
 
         // Menü dışına tıklanınca kapansın
         document.addEventListener("click", function() {
-            menu.style.display = "none";
-        });
-
-        cikisLink.addEventListener("click", function() {
-            sessionStorage.clear();
-            window.location.reload();
+            if (menu) menu.style.display = "none";
         });
 
         // 3. Sertifika alanını güncelle
-       // 3. Sertifika alanını güncelle (artık gerçek veritabanı durumuna bakıyor)
         if (sertifikaKutusu) {
             const ogrenciId = sessionStorage.getItem("ogrenciId");
 
             if (!ogrenciId) {
-                // id yoksa eski mesajı göster (güvenlik/uyum amaçlı)
-                sertifikaKutusu.innerHTML = `
-                    <div style="background: #eff6ff; border: 1px solid #3b82f6; padding: 40px; border-radius: 20px; text-align:center; color: #1e40af;">
-                        <span style="font-size: 3rem;">⏳</span>
-                        <h3 style="font-size: 1.5rem; margin: 15px 0 10px 0; font-weight: 700;">Sertifikanız Hazırlanıyor</h3>
-                        <p style="margin: 0; font-size: 0.95rem; line-height: 1.6;">
-                            Merhaba <strong>${aktifOgrenci}</strong>, eğitim süreciniz ve başarı kriterleriniz eğitmenlerimiz tarafından inceleniyor.
-                        </p>
-                    </div>
-                `;
+                sertifikaKutusu.innerHTML = '<div style="background: #eff6ff; border: 1px solid #3b82f6; padding: 40px; border-radius: 20px; text-align:center; color: #1e40af;">' +
+                    '<span style="font-size: 3rem;">⏳</span>' +
+                    '<h3 style="font-size: 1.5rem; margin: 15px 0 10px 0; font-weight: 700;">Sertifikanız Hazırlanıyor</h3>' +
+                    '<p style="margin: 0; font-size: 0.95rem; line-height: 1.6;">' +
+                        'Merhaba <strong>' + aktifOgrenci + '</strong>, eğitim süreciniz ve başarı kriterleriniz eğitmenlerimiz tarafından inceleniyor.' +
+                    '</p>' +
+                '</div>';
             } else {
-                fetch(`/api/sertifika-durumu/${ogrenciId}`)
+                fetch('/api/sertifika-durumu/' + ogrenciId)
                     .then(res => res.json())
                     .then(veri => {
                         if (veri.hazir) {
-                            // Sertifika hazır! İndirme kutusunu göster
-                            sertifikaKutusu.innerHTML = `
-                                <div style="background: #fffbeb; border: 1px solid #f59e0b; padding: 40px; border-radius: 20px; text-align:center; color: #92400e;">
-                                    <span style="font-size: 3rem;">🏅</span>
-                                    <h3 style="font-size: 1.5rem; margin: 15px 0 10px 0; font-weight: 700;">Tebrikler, ${aktifOgrenci}!</h3>
-                                    <p style="margin: 0 0 20px 0; font-size: 0.95rem; line-height: 1.6;">
-                                        CodeBots Başarı Sertifikanız hazır. Sertifika No: <strong>${veri.sertifikaNo}</strong>
-                                    </p>
-                                    <a href="${veri.sertifikaUrl}" download
-                                       style="display:inline-block; background:#0056b3; color:#ffffff; font-weight:700; padding:12px 24px; border-radius:10px; text-decoration:none;">
-                                        Sertifikamı İndir 🎉
-                                    </a>
-                                </div>
-                            `;
+                            sertifikaKutusu.innerHTML = '<div style="background: #fffbeb; border: 1px solid #f59e0b; padding: 40px; border-radius: 20px; text-align:center; color: #92400e;">' +
+                                '<span style="font-size: 3rem;">🏅</span>' +
+                                '<h3 style="font-size: 1.5rem; margin: 15px 0 10px 0; font-weight: 700;">Tebrikler, ' + aktifOgrenci + '!</h3>' +
+                                '<p style="margin: 0 0 20px 0; font-size: 0.95rem; line-height: 1.6;">' +
+                                    'CodeBots Başarı Sertifikanız hazır. Sertifika No: <strong>' + veri.sertifikaNo + '</strong>' +
+                                '</p>' +
+                                '<button onclick="sertifikayiYazdir(\'' + aktifOgrenci + '\', \'' + veri.sertifikaNo + '\')" ' +
+                                   'style="display:inline-block; background:#0056b3; color:#ffffff; font-weight:700; padding:12px 24px; border:none; border-radius:10px; cursor:pointer; font-size:1rem; transition: background 0.2s;">' +
+                                    'Sertifikamı Görüntüle & İndir 🎉' +
+                                '</button>' +
+                            '</div>';
                         } else {
-                            // Henüz hazır değil, eski bekleme mesajını göster
-                            sertifikaKutusu.innerHTML = `
-                                <div style="background: #eff6ff; border: 1px solid #3b82f6; padding: 40px; border-radius: 20px; text-align:center; color: #1e40af;">
-                                    <span style="font-size: 3rem;">⏳</span>
-                                    <h3 style="font-size: 1.5rem; margin: 15px 0 10px 0; font-weight: 700;">Sertifikanız Hazırlanıyor</h3>
-                                    <p style="margin: 0; font-size: 0.95rem; line-height: 1.6;">
-                                        Merhaba <strong>${aktifOgrenci}</strong>, eğitim süreciniz ve başarı kriterleriniz eğitmenlerimiz tarafından inceleniyor. <br>
-                                        Akademik başarı belgeniz kurslarımızı başarıyla tamamladıktan sonra bu panelde parıldayacak! Takipte kalın. 🚀 <br>
-                                        Aktif kursunuz yoksa kurslarımıza göz atın!
-                                    </p>
-                                </div>
-                            `;
+                            sertifikaKutusu.innerHTML = '<div style="background: #eff6ff; border: 1px solid #3b82f6; padding: 40px; border-radius: 20px; text-align:center; color: #1e40af;">' +
+                                '<span style="font-size: 3rem;">⏳</span>' +
+                                '<h3 style="font-size: 1.5rem; margin: 15px 0 10px 0; font-weight: 700;">Sertifikanız Hazırlanıyor</h3>' +
+                                '<p style="margin: 0; font-size: 0.95rem; line-height: 1.6;">' +
+                                    'Merhaba <strong>' + aktifOgrenci + '</strong>, eğitim süreciniz ve başarı kriterleriniz eğitmenlerimiz tarafından inceleniyor. <br>' +
+                                    'Akademik başarı belgeniz kurslarımızı başarıyla tamamladıktan sonra bu panelde parıldayacak! Takipte kalın. 🚀 <br>' +
+                                    'Aktif kursunuz yoksa kurslarımıza göz atın!' +
+                                '</p>' +
+                            '</div>';
                         }
                     })
                     .catch(err => {
@@ -930,8 +920,347 @@ function oturumDurumunuGuncelle() {
         }
     }
 }
+
+// ========================================================
+// SİHİRLİ SERTİFİKA YAZDIRMA VE GÖRÜNTÜLEME FONKSİYONU
+// ========================================================
+function sertifikayiYazdir(ogrenciAdi, sertifikaNo) {
+    const yazdirmaPenceresi = window.open('', '_blank', 'width=1000,height=700');
+    const bugun = new Date().toLocaleDateString('tr-TR');
+
+    yazdirmaPenceresi.document.write('<!DOCTYPE html>' +
+        '<html lang="tr">' +
+        '<head>' +
+        '<meta charset="UTF-8">' +
+        '<title>CodeBots Başarı Belgesi - ' + ogrenciAdi + '</title>' +
+        '<style>' +
+          '@import url(\'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap\');' +
+
+          '* { box-sizing: border-box; margin: 0; padding: 0; }' +
+
+          'body {' +
+            'font-family: \'Poppins\', sans-serif;' +
+            'background: #ffffff;' +
+            'padding: 0;' +
+            'margin: 0;' +
+            'display: flex;' +
+            'justify-content: center;' +
+            'align-items: center;' +
+            'height: 100vh;' +
+          '}' +
+
+          '.certificate {' +
+            'width: 940px;' +
+            'height: 630px;' +
+            'margin: 0 auto;' +
+            'background: #ffffff;' +
+            'position: relative;' +
+            'border-radius: 18px;' +
+            'border: 2px solid #1b2a4a;' +
+            'overflow: hidden;' +
+            'box-shadow: 0 10px 40px rgba(0,0,0,0.12);' +
+            '-webkit-print-color-adjust: exact;' +
+            'print-color-adjust: exact;' +
+          '}' +
+
+          '.side-bar {' +
+            'position: absolute;' +
+            'left: 0; top: 0; bottom: 0;' +
+            'width: 10px;' +
+            'background: linear-gradient(180deg,#1b2a4a,#2f4a86);' +
+          '}' +
+
+          '.blob-top-left {' +
+            'position: absolute; top: -80px; left: -80px;' +
+            'width: 260px; height: 260px;' +
+            'background: #eaf1fb;' +
+            'border-radius: 50%;' +
+          '}' +
+          '.blob-bottom-right {' +
+            'position: absolute; bottom: -100px; right: -60px;' +
+            'width: 300px; height: 300px;' +
+            'background: #eaf1fb;' +
+            'border-radius: 50%;' +
+          '}' +
+
+          '.dots {' +
+            'position: absolute;' +
+            'font-family: \'JetBrains Mono\', monospace;' +
+            'color: #9fb4d8;' +
+            'font-size: 13px;' +
+            'letter-spacing: 2px;' +
+          '}' +
+          '.dots.top { top: 22px; left: 30px; }' +
+
+          'header {' +
+            'position: relative;' +
+            'display: flex;' +
+            'justify-content: space-between;' +
+            'align-items: flex-start;' +
+            'padding: 34px 50px 0 50px;' +
+          '}' +
+
+          '.logo-block { display: flex; align-items: center; gap: 12px; }' +
+          '.logo-icon {' +
+            'width: 46px; height: 46px;' +
+            'border-radius: 10px;' +
+            'background: #eaf1fb;' +
+            'display: flex; align-items: center; justify-content: center;' +
+            'font-size: 22px;' +
+          '}' +
+          '.logo-text .brand {' +
+            'font-weight: 800;' +
+            'font-size: 22px;' +
+            'color: #16264a;' +
+            'letter-spacing: 0.5px;' +
+          '}' +
+          '.logo-text .sub {' +
+            'font-weight: 600;' +
+            'font-size: 11px;' +
+            'color: #3b82c4;' +
+            'letter-spacing: 1px;' +
+            'text-transform: uppercase;' +
+          '}' +
+          '.tagline {' +
+            'font-family: \'JetBrains Mono\', monospace;' +
+            'font-size: 11px;' +
+            'color: #93a3bd;' +
+            'margin-top: 4px;' +
+          '}' +
+
+          '.meta {' +
+            'text-align: right;' +
+            'font-family: \'JetBrains Mono\', monospace;' +
+            'font-size: 11px;' +
+            'color: #6b7a99;' +
+            'line-height: 1.8;' +
+          '}' +
+          '.meta .fill {' +
+            'display: inline-block;' +
+            'min-width: 130px;' +
+            'border-bottom: 1px dashed #9fb4d8;' +
+            'padding: 0 4px;' +
+            'color: #16264a;' +
+            'font-weight: 500;' +
+          '}' +
+
+          'main {' +
+            'position: relative;' +
+            'text-align: center;' +
+            'padding: 30px 90px 0 90px;' +
+          '}' +
+
+          '.eyebrow {' +
+            'font-family: \'JetBrains Mono\', monospace;' +
+            'letter-spacing: 4px;' +
+            'font-size: 12px;' +
+            'color: #5b8fd6;' +
+            'font-weight: 600;' +
+          '}' +
+
+          'h1 {' +
+            'font-size: 44px;' +
+            'font-weight: 800;' +
+            'color: #16264a;' +
+            'margin-top: 8px;' +
+            'letter-spacing: 0.5px;' +
+          '}' +
+          'h1 span { color: #3b82c4; }' +
+
+          '.desc {' +
+            'margin-top: 18px;' +
+            'font-size: 13.5px;' +
+            'color: #4a5a78;' +
+            'line-height: 1.7;' +
+            'max-width: 640px;' +
+            'margin-left: auto;' +
+            'margin-right: auto;' +
+          '}' +
+
+          '.name-line {' +
+            'margin-top: 26px;' +
+            'font-size: 30px;' +
+            'font-weight: 700;' +
+            'color: #2f6fce;' +
+            'min-height: 42px;' +
+            'border-bottom: 2px dashed #3b82c4;' +
+            'display: inline-block;' +
+            'padding: 0 40px 8px 40px;' +
+            'min-width: 320px;' +
+          '}' +
+
+          '.body-text {' +
+            'margin-top: 18px;' +
+            'font-size: 13.5px;' +
+            'color: #2f3b52;' +
+            'line-height: 1.7;' +
+            'max-width: 620px;' +
+            'margin-left: auto;' +
+            'margin-right: auto;' +
+          '}' +
+
+          '.tags {' +
+            'margin-top: 18px;' +
+            'display: flex;' +
+            'justify-content: center;' +
+            'gap: 10px;' +
+          '}' +
+          '.tag {' +
+            'font-family: \'JetBrains Mono\', monospace;' +
+            'font-size: 11px;' +
+            'color: #2f6fce;' +
+            'background: #eaf1fb;' +
+            'border: 1px solid #cfe0f7;' +
+            'border-radius: 20px;' +
+            'padding: 6px 14px;' +
+          '}' +
+
+          'footer {' +
+            'position: relative;' +
+            'display: flex;' +
+            'justify-content: space-between;' +
+            'align-items: flex-end;' +
+            'padding: 26px 60px 34px 60px;' +
+          '}' +
+
+          '.seal {' +
+            'width: 92px; height: 92px;' +
+            'border-radius: 50%;' +
+            'border: 2px dashed #3b82c4;' +
+            'display: flex; align-items: center; justify-content: center;' +
+            'position: relative;' +
+          '}' +
+          '.seal-inner {' +
+            'width: 72px; height: 72px;' +
+            'border-radius: 50%;' +
+            'background: #eaf1fb;' +
+            'display: flex; align-items: center; justify-content: center;' +
+            'font-size: 28px;' +
+            'color: #f6b93b;' +
+          '}' +
+          '.seal-label {' +
+            'position: absolute;' +
+            'bottom: -18px;' +
+            'font-family: \'JetBrains Mono\', monospace;' +
+            'font-size: 8px;' +
+            'letter-spacing: 2px;' +
+            'color: #3b82c4;' +
+          '}' +
+
+          '.robot {' +
+            'position: absolute;' +
+            'right: 55px;' +
+            'bottom: 120px;' +
+            'font-size: 70px;' +
+          '}' +
+
+          '.signature {' +
+            'text-align: right;' +
+          '}' +
+          '.signature .name {' +
+            'font-weight: 700;' +
+            'font-size: 14px;' +
+            'color: #16264a;' +
+            'border-bottom: 1px solid #16264a;' +
+            'padding-bottom: 4px;' +
+          '}' +
+          '.signature .role {' +
+            'font-family: \'JetBrains Mono\', monospace;' +
+            'font-size: 9px;' +
+            'letter-spacing: 1px;' +
+            'color: #93a3bd;' +
+            'margin-top: 4px;' +
+          '}' +
+
+          '@media print {' +
+            '@page {' +
+              'size: landscape;' +
+              'margin: 0;' +
+            '}' +
+            'body {' +
+              'background: none;' +
+            '}' +
+            '.certificate {' +
+              'box-shadow: none;' +
+              'border: none;' +
+              'width: 100%;' +
+              'height: 100vh;' +
+            '}' +
+          '}' +
+        '</style>' +
+        '</head>' +
+        '<body>' +
+
+        '<div class="certificate">' +
+          '<div class="side-bar"></div>' +
+          '<div class="blob-top-left"></div>' +
+          '<div class="blob-bottom-right"></div>' +
+
+          '<header>' +
+            '<div>' +
+              '<div class="logo-block">' +
+                '<div class="logo-icon">🤖</div>' +
+                '<div class="logo-text">' +
+                  '<div class="brand">CodeBots</div>' +
+                  '<div class="sub">Bilişim Akademi</div>' +
+                '</div>' +
+              '</div>' +
+              '<div class="tagline">&lt;/ eğitim tamamlandı /&gt;</div>' +
+            '</div>' +
+            '<div class="meta">' +
+              'SERTİFİKA NO: <span class="fill">' + sertifikaNo + '</span><br>' +
+              'TARİH: <span class="fill">' + bugun + '</span>' +
+            '</div>' +
+          '</header>' +
+
+          '<main>' +
+            '<div class="eyebrow">GELECEĞİN MÜHENDİSLERİ İÇİN</div>' +
+            '<h1>BAŞARI <span>BELGESİ</span></h1>' +
+            '<div class="desc">' +
+              'Bu belge, aşağıda adı yazılı öğrencimizin CodeBots Bilişim Akademi programını ' +
+              'başarıyla tamamladığını ve bir yazılım kahramanı olma yolunda önemli bir adım attığını onaylar.' +
+            '</div>' +
+
+            '<div class="name-line">' + ogrenciAdi + '</div>' +
+
+            '<div class="body-text">' +
+              'CodeBots Bilişim Akademi eğitim programını başarıyla tamamlayarak ' +
+              'bu sertifikayı kazanmaya hak kazanmıştır.' +
+            '</div>' +
+
+            '<div class="tags">' +
+              '<div class="tag">algoritma</div>' +
+              '<div class="tag">problem çözme</div>' +
+              '<div class="tag">analitik düşünme</div>' +
+            '</div>' +
+          '</main>' +
+
+          '<footer>' +
+            '<div class="seal">' +
+              '<div class="seal-inner">★</div>' +
+              '<div class="seal-label">ONAYLANDI</div>' +
+            '</div>' +
+
+            '<div class="signature">' +
+              '<div class="name">Makbule Elif Gök</div>' +
+              '<div class="role">AKADEMİ MÜDÜRÜ</div>' +
+            '</div>' +
+          '</footer>' +
+
+          '<div class="robot">🤖</div>' +
+        '</div>' +
+
+        '</body>' +
+        '</html>');
+    yazdirmaPenceresi.document.close();
+    yazdirmaPenceresi.onload = function() {
+        yazdirmaPenceresi.print();
+        yazdirmaPenceresi.onafterprint = function() {
+            yazdirmaPenceresi.close();
+        };
+    };
+}
 </script>
-<script>
    const hamburgerBtn = document.getElementById('hamburger-btn');
 const navLinksContainer = document.getElementById('nav-links-container');
 
