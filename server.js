@@ -6,6 +6,7 @@ const fs = require('fs');
 const { sertifikaPdfUret } = require('./sertifikaOlustur');
 
 const app = express();
+app.use(express.static(__dirname));
 const PORT = process.env.PORT || 3000;
 
 // Görsellerin kaydedileceği klasörü oluşturuyoruz (yoksa)
