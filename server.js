@@ -251,78 +251,78 @@ app.get('/api/sertifika-durumu/:id', (req, res) => {
 // KURSLAR API YOLLARI (TAM SİSTEM - CRUD)
 // ==========================================
 
-app.get('/api/kurslar', (req, res) => {
-    const sql = 'SELECT * FROM kurslar';
-    db.query(sql, (err, results) => {
-        if (err) {
-            console.error('Kurslar çekilirken hata oluştu:', err);
-            return res.status(500).json({ error: 'Veri tabanı hatası' });
-        }
+app.get('/api/kurslar', async (req, res) => {
+    try {
+        const sql = 'SELECT * FROM kurslar';
+        const [results] = await db.query(sql);
         res.json(results);
-    });
+    } catch (err) {
+        console.error('Kurslar çekilirken hata oluştu:', err);
+        return res.status(500).json({ error: 'Veri tabanı hatası' });
+    }
 });
 
-app.post('/api/kurslar', (req, res) => {
+app.post('/api/kurslar', async (req, res) => {
     const { kurs_adi, yas_grubu, aciklama } = req.body;
     const adi = kurs_adi || req.body.kursAdi || req.body.kurs_adi;
     const yas = yas_grubu || req.body.yasGrubu || req.body.yas_grubu;
     const icerik = aciklama || req.body.aciklama;
 
-    const sql = 'INSERT INTO kurslar (kurs_adi, yas_grubu, aciklama) VALUES (?, ?, ?)';
-    db.query(sql, [adi, yas, icerik], (err, result) => {
-        if (err) {
-            console.error('Veri tabanına kurs eklenirken hata oluştu:', err);
-            return res.status(500).json({ error: 'Veri tabanı hatası' });
-        }
+    try {
+        const sql = 'INSERT INTO kurslar (kurs_adi, yas_grubu, aciklama) VALUES (?, ?, ?)';
+        const [result] = await db.query(sql, [adi, yas, icerik]);
         res.status(201).json({ message: 'Kurs başarıyla eklendi', id: result.insertId });
-    });
+    } catch (err) {
+        console.error('Veri tabanına kurs eklenirken hata oluştu:', err);
+        return res.status(500).json({ error: 'Veri tabanı hatası' });
+    }
 });
 
-app.put('/api/kurslar/:id', (req, res) => {
+app.put('/api/kurslar/:id', async (req, res) => {
     const { id } = req.params;
     const { kurs_adi, yas_grubu, aciklama } = req.body;
     const adi = kurs_adi || req.body.kursAdi || req.body.kurs_adi;
     const yas = yas_grubu || req.body.yasGrubu || req.body.yas_grubu;
     const icerik = aciklama || req.body.aciklama;
 
-    const sql = 'UPDATE kurslar SET kurs_adi = ?, yas_grubu = ?, aciklama = ? WHERE id = ?';
-    db.query(sql, [adi, yas, icerik, id], (err, result) => {
-        if (err) {
-            console.error('Kurs güncellenirken hata oluştu:', err);
-            return res.status(500).json({ error: 'Veri tabanı hatası' });
-        }
+    try {
+        const sql = 'UPDATE kurslar SET kurs_adi = ?, yas_grubu = ?, aciklama = ? WHERE id = ?';
+        await db.query(sql, [adi, yas, icerik, id]);
         res.json({ message: 'Kurs başarıyla güncellendi.' });
-    });
+    } catch (err) {
+        console.error('Kurs güncellenirken hata oluştu:', err);
+        return res.status(500).json({ error: 'Veri tabanı hatası' });
+    }
 });
 
-app.delete('/api/kurslar/:id', (req, res) => {
+app.delete('/api/kurslar/:id', async (req, res) => {
     const { id } = req.params;
-    const sql = 'DELETE FROM kurslar WHERE id = ?';
-    db.query(sql, [id], (err, result) => {
-        if (err) {
-            console.error('Kurs silinirken hata oluştu:', err);
-            return res.status(500).json({ error: 'Veri tabanı hatası' });
-        }
+    try {
+        const sql = 'DELETE FROM kurslar WHERE id = ?';
+        await db.query(sql, [id]);
         res.json({ message: 'Kurs başarıyla silindi.' });
-    });
+    } catch (err) {
+        console.error('Kurs silinirken hata oluştu:', err);
+        return res.status(500).json({ error: 'Veri tabanı hatası' });
+    }
 });
 
 // ==========================================
 // REFERANSLAR (İŞ BİRLİKLERİ) API YOLLARI
 // ==========================================
 
-app.get('/api/referanslar', (req, res) => {
-    const sql = 'SELECT * FROM referanslar ORDER BY id DESC';
-    db.query(sql, (err, results) => {
-        if (err) {
-            console.error('Referanslar çekilirken hata oluştu:', err);
-            return res.status(500).json({ error: 'Veri tabanı hatası' });
-        }
+app.get('/api/referanslar', async (req, res) => {
+    try {
+        const sql = 'SELECT * FROM referanslar ORDER BY id DESC';
+        const [results] = await db.query(sql);
         res.json(results);
-    });
+    } catch (err) {
+        console.error('Referanslar çekilirken hata oluştu:', err);
+        return res.status(500).json({ error: 'Veri tabanı hatası' });
+    }
 });
 
-app.post('/api/referanslar', upload.single('gorsel'), (req, res) => {
+app.post('/api/referanslar', upload.single('gorsel'), async (req, res) => {
     const { kurum_adi, kategori, baslik, aciklama } = req.body;
 
     if (!req.file) {
@@ -331,91 +331,85 @@ app.post('/api/referanslar', upload.single('gorsel'), (req, res) => {
 
     const gorselYolu = '/uploads/referanslar/' + req.file.filename;
 
-    const sql = 'INSERT INTO referanslar (kurum_adi, kategori, baslik, aciklama, gorsel) VALUES (?, ?, ?, ?, ?)';
-    db.query(sql, [kurum_adi, kategori, baslik, aciklama, gorselYolu], (err, result) => {
-        if (err) {
-            console.error('Referans eklenirken hata oluştu:', err);
-            return res.status(500).json({ error: 'Veri tabanı hatası' });
-        }
+    try {
+        const sql = 'INSERT INTO referanslar (kurum_adi, kategori, baslik, aciklama, gorsel) VALUES (?, ?, ?, ?, ?)';
+        const [result] = await db.query(sql, [kurum_adi, kategori, baslik, aciklama, gorselYolu]);
         res.status(201).json({ message: 'İş birliği başarıyla eklendi', id: result.insertId });
-    });
-});
-
-app.put('/api/referanslar/:id', upload.single('gorsel'), (req, res) => {
-    const { id } = req.params;
-    const { kurum_adi, kategori, baslik, aciklama } = req.body;
-
-    if (req.file) {
-        const gorselYolu = '/uploads/referanslar/' + req.file.filename;
-        const sql = 'UPDATE referanslar SET kurum_adi = ?, kategori = ?, baslik = ?, aciklama = ?, gorsel = ? WHERE id = ?';
-        db.query(sql, [kurum_adi, kategori, baslik, aciklama, gorselYolu, id], (err, result) => {
-            if (err) {
-                console.error('Referans güncellenirken hata oluştu:', err);
-                return res.status(500).json({ error: 'Veri tabanı hatası' });
-            }
-            res.json({ message: 'İş birliği başarıyla güncellendi.' });
-        });
-    } else {
-        const sql = 'UPDATE referanslar SET kurum_adi = ?, kategori = ?, baslik = ?, aciklama = ? WHERE id = ?';
-        db.query(sql, [kurum_adi, kategori, baslik, aciklama, id], (err, result) => {
-            if (err) {
-                console.error('Referans güncellenirken hata oluştu:', err);
-                return res.status(500).json({ error: 'Veri tabanı hatası' });
-            }
-            res.json({ message: 'İş birliği başarıyla güncellendi.' });
-        });
+    } catch (err) {
+        console.error('Referans eklenirken hata oluştu:', err);
+        return res.status(500).json({ error: 'Veri tabanı hatası' });
     }
 });
 
-app.delete('/api/referanslar/:id', (req, res) => {
+app.put('/api/referanslar/:id', upload.single('gorsel'), async (req, res) => {
     const { id } = req.params;
-    const sql = 'DELETE FROM referanslar WHERE id = ?';
-    db.query(sql, [id], (err, result) => {
-        if (err) {
-            console.error('Referans silinirken hata oluştu:', err);
-            return res.status(500).json({ error: 'Veri tabanı hatası' });
+    const { kurum_adi, kategori, baslik, aciklama } = req.body;
+
+    try {
+        if (req.file) {
+            const gorselYolu = '/uploads/referanslar/' + req.file.filename;
+            const sql = 'UPDATE referanslar SET kurum_adi = ?, kategori = ?, baslik = ?, aciklama = ?, gorsel = ? WHERE id = ?';
+            await db.query(sql, [kurum_adi, kategori, baslik, aciklama, gorselYolu, id]);
+        } else {
+            const sql = 'UPDATE referanslar SET kurum_adi = ?, kategori = ?, baslik = ?, aciklama = ? WHERE id = ?';
+            await db.query(sql, [kurum_adi, kategori, baslik, aciklama, id]);
         }
+        res.json({ message: 'İş birliği başarıyla güncellendi.' });
+    } catch (err) {
+        console.error('Referans güncellenirken hata oluştu:', err);
+        return res.status(500).json({ error: 'Veri tabanı hatası' });
+    }
+});
+
+app.delete('/api/referanslar/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const sql = 'DELETE FROM referanslar WHERE id = ?';
+        await db.query(sql, [id]);
         res.json({ message: 'İş birliği başarıyla silindi.' });
-    });
+    } catch (err) {
+        console.error('Referans silinirken hata oluştu:', err);
+        return res.status(500).json({ error: 'Veri tabanı hatası' });
+    }
 });
 
 // ==========================================
 // MESAJLAR API YOLLARI
 // ==========================================
 
-app.post('/api/mesajlar', (req, res) => {
+app.post('/api/mesajlar', async (req, res) => {
     const { ad_soyad, e_posta, konu, mesaj } = req.body;
-    const sql = 'INSERT INTO mesajlar (ad_soyad, e_posta, konu, mesaj) VALUES (?, ?, ?, ?)';
-    db.query(sql, [ad_soyad, e_posta, konu, mesaj], (err, result) => {
-        if (err) {
-            console.error('Mesaj kaydedilirken hata oluştu:', err);
-            return res.status(500).json({ error: 'Veri tabanı hatası' });
-        }
+    try {
+        const sql = 'INSERT INTO mesajlar (ad_soyad, e_posta, konu, mesaj) VALUES (?, ?, ?, ?)';
+        await db.query(sql, [ad_soyad, e_posta, konu, mesaj]);
         res.status(200).json({ message: 'Mesaj başarıyla kaydedildi!' });
-    });
+    } catch (err) {
+        console.error('Mesaj kaydedilirken hata oluştu:', err);
+        return res.status(500).json({ error: 'Veri tabanı hatası' });
+    }
 });
 
-app.get('/api/mesajlar', (req, res) => {
-    const sql = 'SELECT * FROM mesajlar ORDER BY tarih DESC';
-    db.query(sql, (err, results) => {
-        if (err) {
-            console.error('Mesajlar çekilirken hata oluştu:', err);
-            return res.status(500).json({ error: 'Veri tabanı hatası' });
-        }
+app.get('/api/mesajlar', async (req, res) => {
+    try {
+        const sql = 'SELECT * FROM mesajlar ORDER BY tarih DESC';
+        const [results] = await db.query(sql);
         res.json(results);
-    });
+    } catch (err) {
+        console.error('Mesajlar çekilirken hata oluştu:', err);
+        return res.status(500).json({ error: 'Veri tabanı hatası' });
+    }
 });
 
-app.delete('/api/mesajlar/:id', (req, res) => {
+app.delete('/api/mesajlar/:id', async (req, res) => {
     const { id } = req.params;
-    const sql = 'DELETE FROM mesajlar WHERE id = ?';
-    db.query(sql, [id], (err, result) => {
-        if (err) {
-            console.error('Mesaj silinirken hata oluştu:', err);
-            return res.status(500).json({ error: 'Veri tabanı hatası' });
-        }
+    try {
+        const sql = 'DELETE FROM mesajlar WHERE id = ?';
+        await db.query(sql, [id]);
         res.json({ message: 'Mesaj başarıyla silindi.' });
-    });
+    } catch (err) {
+        console.error('Mesaj silinirken hata oluştu:', err);
+        return res.status(500).json({ error: 'Veri tabanı hatası' });
+    }
 });
 
 // ==========================================
