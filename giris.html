@@ -163,13 +163,22 @@
 if (response.ok) {
     alert(`Hoş geldiniz Sayın ${sonuc.veli_adi}! Giriş başarıyla sağlandı.`);
     
-    // Senin mevcut session kayıtların kalıyor, ek olarak öğrencinin adını da net kaydedelim
+    // Hem eski hem yeni isimleri kaydediyoruz ki sistem kesinlikle bulsun:
     sessionStorage.setItem('veliAdi', sonuc.veli_adi);
+    sessionStorage.setItem('veli_adi', sonuc.veli_adi); // Alternatif
+
     sessionStorage.setItem('ogrenciAdi', sonuc.ogrenci_adi);
+    sessionStorage.setItem('ogrenci_adi', sonuc.ogrenci_adi); // Alternatif
+
     sessionStorage.setItem('veliEmail', veri.e_posta);
+    sessionStorage.setItem('e_posta', veri.e_posta); // Alternatif
     
-    // İŞTE BURASI! veli.html yerine doğrudan ana sayfaya fırlatıyoruz:
-    window.location.href = '/'; 
+    sessionStorage.setItem("ogrenciId", sonuc.id);
+    sessionStorage.setItem("ogrenci_id", sonuc.id); // Alternatif
+    
+    // Tarayıcıyı doğrudan ana sayfaya (index.html) zorla gönderiyoruz:
+    window.location.replace('/'); 
+}
 } else {
                     alert(sonuc.error || 'Kayıt sırasında bir hata oluştu.');
                 }
