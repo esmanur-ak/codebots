@@ -56,23 +56,29 @@ db.query('SELECT 1')
 // ==========================================
 
 // ==========================================
-// 1. Veli Kayıt Noktası (POST - GÜNCEL)
+// 1. Veli Kayıt Noktası (POST - UYUMLU)
 // ==========================================
 app.post('/api/kayit', async (req, res) => {
+    // Frontend'den gelen verileri alıyoruz
     const { veli_adi, ogrenci_adi, e_posta, sifre } = req.body;
+    
+    // Frontend'den gelebilecek alternatif isimlendirmeleri de garantiye alalım
+    const vAd = veli_adi || req.body.veli_ad_soyad || req.body.veliAd;
+    const oAd = ogrenci_adi || req.body.ogrenci_ad_soyad || req.body.ogrenciAd;
+    const email = e_posta || req.body.eposta;
 
     try {
-        // 1. Bu e-posta adresiyle daha önce kayıt olunmuş mu kontrol edelim
-        const kontrolSql = 'SELECT * FROM kullanicilar WHERE e_posta = ?';
-        const [results] = await db.query(kontrolSql, [e_posta]);
+        // 1. Veritabanındaki 'eposta' kolonuna göre e-posta kontrolü yapıyoruz (alt tiresiz)
+        const kontrolSql = 'SELECT * FROM kullanicilar WHERE eposta = ?';
+        const [results] = await db.query(kontrolSql, [email]);
 
         if (results.length > 0) {
             return res.status(400).json({ error: 'Bu e-posta adresiyle zaten bir hesap var!' });
         }
 
-        // 2. Yeni kullanıcıyı veritabanına ekleyelim
-        const sql = 'INSERT INTO kullanicilar (veli_adi, ogrenci_adi, e_posta, sifre) VALUES (?, ?, ?, ?)';
-        await db.query(sql, [veli_adi, ogrenci_adi, e_posta, sifre]);
+        // 2. Kolon isimlerini veritabanındaki gibi 'veli_ad_soyad', 'ogrenci_ad_soyad' ve 'eposta' yaptık
+        const sql = 'INSERT INTO kullanicilar (veli_ad_soyad, ogrenci_ad_soyad, eposta, sifre) VALUES (?, ?, ?, ?)';
+        await db.query(sql, [vAd, oAd, email, sifre]);
 
         res.status(201).json({ message: 'Hesabınız başarıyla oluşturuldu!' });
     } catch (err) {
@@ -82,14 +88,16 @@ app.post('/api/kayit', async (req, res) => {
 });
 
 // ==========================================
-// 2. Veli Giriş Noktası (POST - GÜNCEL)
+// 2. Veli Giriş Noktası (POST - UYUMLU)
 // ==========================================
 app.post('/api/giris', async (req, res) => {
     const { e_posta, sifre } = req.body;
+    const email = e_posta || req.body.eposta;
 
     try {
-        const sql = 'SELECT * FROM kullanicilar WHERE e_posta = ? AND sifre = ?';
-        const [results] = await db.query(sql, [e_posta, sifre]);
+        // Giriş yaparken de 'eposta' kolonunu sorguluyoruz
+        const sql = 'SELECT * FROM kullanicilar WHERE eposta = ? AND sifre = ?';
+        const [results] = await db.query(sql, [email, sifre]);
 
         if (results.length === 0) {
             return res.status(401).json({ error: 'E-posta veya şifre hatalı!' });
@@ -99,8 +107,8 @@ app.post('/api/giris', async (req, res) => {
         res.json({
             message: 'Giriş başarılı!',
             id: kullanici.id,
-            veli_adi: kullanici.veli_adi,
-            ogrenci_adi: kullanici.ogrenci_adi
+            veli_adi: kullanici.veli_ad_soyad,    // Veritabanındaki kolon ismine göre çektik
+            ogrenci_adi: kullanici.ogrenci_ad_soyad // Veritabanındaki kolon ismine göre çektik
         });
     } catch (err) {
         console.error('Giriş esnasında hata:', err);
