@@ -1,5 +1,4 @@
 const express = require('express');
-const mysql = require('mysql2');
 const session = require('express-session');
 const path = require('path');
 const multer = require('multer');
@@ -41,22 +40,16 @@ app.use(session({
 }));
 
 // MySQL Veri Tabanı Bağlantısı
-const db = mysql.createConnection({
-    host: '127.0.0.1',
-    user: 'root',
-    password: '',
-    database: 'codebots',
-    port: 3307
-});
+const db = require('./db');
 
-// Veri tabanına bağlanmayı dene
-db.connect((err) => {
-    if (err) {
+// Veritabanı bağlantısını test et (Havuz yapısına uygun test)
+db.query('SELECT 1')
+    .then(() => {
+        console.log('🚀 MySQL Veri Tabanına Başarıyla Bağlanıldı!');
+    })
+    .catch((err) => {
         console.error('MySQL bağlantı hatası:', err);
-        return;
-    }
-    console.log('🚀 MySQL Veri Tabanına Başarıyla Bağlanıldı!');
-});
+    });
 
 // ==========================================
 // VELİ GİRİŞ & KAYIT API YOLLARI
