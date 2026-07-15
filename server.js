@@ -428,6 +428,25 @@ app.post('/giris-yap', (req, res) => {
     res.redirect('/');
 });
 
+// TABLO YAPILARINI KONTROL ETMEK İÇİN GEÇİCİ ROTA
+app.get('/api/tablo-kontrol', async (req, res) => {
+    try {
+        const [kurslarYapisi] = await db.query('DESCRIBE kurslar');
+        const [referanslarYapisi] = await db.query('DESCRIBE referanslar');
+        const [mesajlarYapisi] = await db.query('DESCRIBE mesajlar');
+        
+        res.json({
+            kurslar: kurslarYapisi,
+            referanslar: referanslarYapisi,
+            mesajlar: mesajlarYapisi
+        });
+    } catch (err) {
+        res.status(500).json({ 
+            error: "Tablo yapısı okunurken hata oluştu!", 
+            detay: err.message 
+        });
+    }
+});
 // Sunucuyu başlat
 app.listen(PORT, () => {
     console.log(`Sunucu http://localhost:${PORT} adresinde tıkır tıkır çalışıyor!`);
