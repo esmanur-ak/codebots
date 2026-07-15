@@ -186,78 +186,51 @@ app.get('/api/admin/kullanicilar', adminApiKontrol, async (req, res) => {
     }
 });
 
-// ==========================================
-// SERTİFİKA TANIMLAMA API YOLU (HATASIZ)
-// ==========================================
-app.post('/api/admin/sertifika-ekle', adminApiKontrol, async (req, res) => {
-    const { kullanici_id } = req.body;
-
-    try {
-        const sql = 'SELECT * FROM kullanicilar WHERE id = ?';
-        const [results] = await db.query(sql, [kullanici_id]);
-
-        if (results.length === 0) {
-            return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
-        }
-
-        const kullanici = results[0];
-        const yil = new Date().getFullYear();
-        const sertifikaNo = `CB-${yil}-${String(kullanici.id).padStart(4, '0')}`;
-        const tarih = new Date().toLocaleDateString('tr-TR');
-
-        const pdfBuffer = await sertifikaPdfUret({
-            ogrenciAdi: kullanici.ogrenci_ad_soyad,
-            tarih,
-            sertifikaNo,
-        });
-
-        const sertifikaKlasoru = path.join(__dirname, 'uploads', 'sertifikalar');
-        if (!fs.existsSync(sertifikaKlasoru)) {
-            fs.mkdirSync(sertifikaKlasoru, { recursive: true });
-        }
-        const dosyaAdi = `sertifika-${kullanici.id}.pdf`;
-        fs.writeFileSync(path.join(sertifikaKlasoru, dosyaAdi), pdfBuffer);
-
-        const sertifikaUrl = `/uploads/sertifikalar/${dosyaAdi}`;
-
-        // Veritabanında sertifika kolonları olmadığı için güncellemeyi pas geçip sadece başarılı dönüyoruz
-        res.json({
-            message: 'Sertifika başarıyla oluşturuldu!',
-            sertifikaUrl,
-        });
-
-    } catch (error) {
-        console.error('Sertifika oluşturulurken hata:', error);
-        res.status(500).json({ error: 'Sertifika oluşturulamadı' });
-    }
-});
-
-// ==========================================
-// ÖĞRENCİ SERTİFİKA DURUMU SORGULAMA (HATASIZ)
+/// ==========================================
+// ÖĞRENCİ SERTİFİKA DURUMU SORGULAMA (DOSYA KONTROLLÜ ÇÖZÜM)
 // ==========================================
 app.get('/api/sertifika-durumu/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        const sql = 'SELECT id FROM kullanicilar WHERE id = ?';
+        const sql = 'SELECT id, ogrenci_ad_soyad FROM kullanicilar WHERE id = ?';
         const [results] = await db.query(sql, [id]);
 
         if (results.length === 0) {
             return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
         }
 
-        // Sertifika kolonları tabloda bulunmadığı için varsayılan olarak hazır değil döndürüyoruz
+        const kullanici = results[0];
+        const dosyaAdi = `sertifika-${kullanici.id}.pdf`;
+        const sertifikaYolu = path.join(__dirname, 'uploads', 'sertifikalar', dosyaAdi);
+
+        // Sunucuda bu öğrenciye ait sertifika PDF'i fiziksel olarak var mı kontrol ediyoruz
+        if (fs.existsSync(sertifikaYolu)) {
+            const yil = new Date().getFullYear();
+            const sertifikaNo = `CB-${yil}-${String(kullanici.id).padStart(4, '0')}`;
+            const tarih = new Date().toLocaleDateString('tr-TR');
+            const sertifikaUrl = `/uploads/sertifikalar/${dosyaAdi}`;
+
+            return res.json({
+                hazir: true, // PDF varsa artık "true" dönüyoruz! 🎉
+                sertifikaNo: sertifikaNo,
+                tarih: tarih,
+                sertifikaUrl: sertifikaUrl
+            });
+        }
+
+        // Eğer sunucuda dosya yoksa henüz hazır değil döndür
         res.json({
             hazir: false,
             sertifikaNo: null,
             tarih: null,
             sertifikaUrl: null
         });
+
     } catch (err) {
         console.error('Sertifika durumu sorgulanırken hata:', err);
         return res.status(500).json({ error: 'Veri tabanı hatası' });
     }
 });
-
 // ==========================================
 // KURSLAR API YOLLARI (TAM SİSTEM - CRUD)
 // ==========================================
