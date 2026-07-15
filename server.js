@@ -30,6 +30,10 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Gelen JSON / form verilerini okuyabilmek için middleware
 app.use(express.json());
+const path = require('path');
+
+// Uploads klasörünü dış dünyaya (statik erişime) açıyoruz:
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname)));
 app.use(session({
