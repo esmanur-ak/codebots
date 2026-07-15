@@ -55,36 +55,41 @@ db.query('SELECT 1')
 // VELİ GİRİŞ & KAYIT API YOLLARI
 // ==========================================
 
-// 1. Veli Kayıt Noktası (POST)
-app.post('/api/kayit', (req, res) => {
+// ==========================================
+// 1. Veli Kayıt Noktası (POST - GÜNCEL)
+// ==========================================
+app.post('/api/kayit', async (req, res) => {
     const { veli_adi, ogrenci_adi, e_posta, sifre } = req.body;
 
-    const kontrolSql = 'SELECT * FROM kullanicilar WHERE e_posta = ?';
-    db.query(kontrolSql, [e_posta], (err, results) => {
-        if (err) return res.status(500).json({ error: 'Veri tabanı hatası' });
+    try {
+        // 1. Bu e-posta adresiyle daha önce kayıt olunmuş mu kontrol edelim
+        const kontrolSql = 'SELECT * FROM kullanicilar WHERE e_posta = ?';
+        const [results] = await db.query(kontrolSql, [e_posta]);
 
         if (results.length > 0) {
             return res.status(400).json({ error: 'Bu e-posta adresiyle zaten bir hesap var!' });
         }
 
+        // 2. Yeni kullanıcıyı veritabanına ekleyelim
         const sql = 'INSERT INTO kullanicilar (veli_adi, ogrenci_adi, e_posta, sifre) VALUES (?, ?, ?, ?)';
-        db.query(sql, [veli_adi, ogrenci_adi, e_posta, sifre], (err, result) => {
-            if (err) {
-                console.error('Kayıt esnasında hata:', err);
-                return res.status(500).json({ error: 'Kayıt yapılamadı.' });
-            }
-            res.status(201).json({ message: 'Hesabınız başarıyla oluşturuldu!' });
-        });
-    });
+        await db.query(sql, [veli_adi, ogrenci_adi, e_posta, sifre]);
+
+        res.status(201).json({ message: 'Hesabınız başarıyla oluşturuldu!' });
+    } catch (err) {
+        console.error('Kayıt esnasında hata:', err);
+        return res.status(500).json({ error: 'Veri tabanı hatası veya kayıt yapılamadı.' });
+    }
 });
 
-// 2. Veli Giriş Noktası (POST)
-app.post('/api/giris', (req, res) => {
+// ==========================================
+// 2. Veli Giriş Noktası (POST - GÜNCEL)
+// ==========================================
+app.post('/api/giris', async (req, res) => {
     const { e_posta, sifre } = req.body;
 
-    const sql = 'SELECT * FROM kullanicilar WHERE e_posta = ? AND sifre = ?';
-    db.query(sql, [e_posta, sifre], (err, results) => {
-        if (err) return res.status(500).json({ error: 'Veri tabanı hatası' });
+    try {
+        const sql = 'SELECT * FROM kullanicilar WHERE e_posta = ? AND sifre = ?';
+        const [results] = await db.query(sql, [e_posta, sifre]);
 
         if (results.length === 0) {
             return res.status(401).json({ error: 'E-posta veya şifre hatalı!' });
@@ -97,7 +102,10 @@ app.post('/api/giris', (req, res) => {
             veli_adi: kullanici.veli_adi,
             ogrenci_adi: kullanici.ogrenci_adi
         });
-    });
+    } catch (err) {
+        console.error('Giriş esnasında hata:', err);
+        return res.status(500).json({ error: 'Veri tabanı hatası' });
+    }
 });
 
 // ==========================================
@@ -444,10 +452,14 @@ app.get('/api/tablo-kontrol', async (req, res) => {
         const [referanslarYapisi] = await db.query('DESCRIBE referanslar');
         const [mesajlarYapisi] = await db.query('DESCRIBE mesajlar');
         
+        // Kullanıcı tablonun adının 'kullanicilar' olduğunu varsayarak sorguluyoruz:
+        const [kullanicilarYapisi] = await db.query('DESCRIBE kullanicilar'); 
+        
         res.json({
             kurslar: kurslarYapisi,
             referanslar: referanslarYapisi,
-            mesajlar: mesajlarYapisi
+            mesajlar: mesajlarYapisi,
+            kullanicilar: kullanicilarYapisi
         });
     } catch (err) {
         res.status(500).json({ 
