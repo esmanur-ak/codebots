@@ -253,7 +253,8 @@ app.get('/api/sertifika-durumu/:id', (req, res) => {
 
 app.get('/api/kurslar', async (req, res) => {
     try {
-        const sql = 'SELECT * FROM kurslar';
+        // Veritabanındaki kolon isimleri: id, baslik, aciklama, hedef_yas, resim, olusturulma_tarihi
+        const sql = 'SELECT id, baslik AS kurs_adi, hedef_yas AS yas_grubu, aciklama, resim FROM kurslar';
         const [results] = await db.query(sql);
         res.json(results);
     } catch (err) {
@@ -269,7 +270,8 @@ app.post('/api/kurslar', async (req, res) => {
     const icerik = aciklama || req.body.aciklama;
 
     try {
-        const sql = 'INSERT INTO kurslar (kurs_adi, yas_grubu, aciklama) VALUES (?, ?, ?)';
+        // SQL sorgusunu 'baslik' ve 'hedef_yas' kolonlarına göre güncelledik
+        const sql = 'INSERT INTO kurslar (baslik, hedef_yas, aciklama) VALUES (?, ?, ?)';
         const [result] = await db.query(sql, [adi, yas, icerik]);
         res.status(201).json({ message: 'Kurs başarıyla eklendi', id: result.insertId });
     } catch (err) {
@@ -286,7 +288,8 @@ app.put('/api/kurslar/:id', async (req, res) => {
     const icerik = aciklama || req.body.aciklama;
 
     try {
-        const sql = 'UPDATE kurslar SET kurs_adi = ?, yas_grubu = ?, aciklama = ? WHERE id = ?';
+        // SQL sorgusunu 'baslik' ve 'hedef_yas' kolonlarına göre güncelledik
+        const sql = 'UPDATE kurslar SET baslik = ?, hedef_yas = ?, aciklama = ? WHERE id = ?';
         await db.query(sql, [adi, yas, icerik, id]);
         res.json({ message: 'Kurs başarıyla güncellendi.' });
     } catch (err) {
@@ -374,14 +377,18 @@ app.delete('/api/referanslar/:id', async (req, res) => {
 });
 
 // ==========================================
-// MESAJLAR API YOLLARI
+// MESAJLAR API YOLLARI (GÜNCEL & UYUMLU)
 // ==========================================
 
 app.post('/api/mesajlar', async (req, res) => {
     const { ad_soyad, e_posta, konu, mesaj } = req.body;
+    // Frontend'den e_posta gelse bile veritabanındaki eposta kolonuna yazdırıyoruz
+    const email = e_posta || req.body.e_posta || req.body.eposta;
+    
     try {
-        const sql = 'INSERT INTO mesajlar (ad_soyad, e_posta, konu, mesaj) VALUES (?, ?, ?, ?)';
-        await db.query(sql, [ad_soyad, e_posta, konu, mesaj]);
+        // Kolon adı veritabanındaki gibi 'eposta' yapıldı
+        const sql = 'INSERT INTO mesajlar (ad_soyad, eposta, konu, mesaj) VALUES (?, ?, ?, ?)';
+        await db.query(sql, [ad_soyad, email, konu, mesaj]);
         res.status(200).json({ message: 'Mesaj başarıyla kaydedildi!' });
     } catch (err) {
         console.error('Mesaj kaydedilirken hata oluştu:', err);
@@ -391,7 +398,9 @@ app.post('/api/mesajlar', async (req, res) => {
 
 app.get('/api/mesajlar', async (req, res) => {
     try {
-        const sql = 'SELECT * FROM mesajlar ORDER BY tarih DESC';
+        // Tarih sıralaması 'olusturulma_tarihi' kolonuna göre güncellendi.
+        // Frontend'in kırılmaması için eposta'yı e_posta, olusturulma_tarihi'ni ise tarih olarak takma adla (AS) çektik.
+        const sql = 'SELECT id, ad_soyad, eposta AS e_posta, konu, mesaj, okundu_mu, olusturulma_tarihi AS tarih FROM mesajlar ORDER BY olusturulma_tarihi DESC';
         const [results] = await db.query(sql);
         res.json(results);
     } catch (err) {
