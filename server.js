@@ -162,31 +162,42 @@ app.get('/admin', adminSayfaKontrol, (req, res) => {
 });
 
 // Admin panelinin velileri görebilmesi için gereken yol
-app.get('/api/admin/kullanicilar', adminApiKontrol, (req, res) => {
-    const sql = 'SELECT id, veli_adi, ogrenci_adi, e_posta, sertifika_durumu FROM kullanicilar ORDER BY id DESC'
-    db.query(sql, (err, results) => {
-        if (err) {
-            console.error('Veliler çekilirken hata:', err);
-            return res.status(500).json({ error: 'Veri tabanı hatası' });
-        }
-        res.json(results);
-    });
+// ==========================================
+// Admin panelinin velileri görebilmesi için gereken yol (UYUMLU)
+// ==========================================
+app.get('/api/admin/kullanicilar', adminApiKontrol, async (req, res) => {
+    try {
+        // Gerçek veritabanı kolon isimlerini sorguluyoruz
+        const sql = 'SELECT id, veli_ad_soyad, ogrenci_ad_soyad, eposta, sertifika_durumu FROM kullanicilar ORDER BY id DESC';
+        const [results] = await db.query(sql);
+
+        // Frontend'in beklediği eski kolon isimlerine göre veriyi haritalandırıp gönderiyoruz:
+        const duzenlenmisKullanicilar = results.map(kullanici => ({
+            id: kullanici.id,
+            veli_adi: kullanici.veli_ad_soyad,
+            ogrenci_adi: kullanici.ogrenci_ad_soyad,
+            e_posta: kullanici.eposta,
+            sertifika_durumu: kullanici.sertifika_durumu
+        }));
+
+        res.json(duzenlenmisKullanicilar);
+    } catch (err) {
+        console.error('Veliler çekilirken hata:', err);
+        return res.status(500).json({ error: 'Veri tabanı hatası' });
+    }
 });
 
 // ==========================================
-// SERTİFİKA TANIMLAMA API YOLU
+// SERTİFİKA TANIMLAMA API YOLU (UYUMLU)
 // ==========================================
-
 app.post('/api/admin/sertifika-ekle', adminApiKontrol, async (req, res) => {
     const { kullanici_id } = req.body;
 
-    // 1. Önce öğrencinin gerçek adını veritabanından çekiyoruz
-    const sql = 'SELECT * FROM kullanicilar WHERE id = ?';
-    db.query(sql, [kullanici_id], async (err, results) => {
-        if (err) {
-            console.error('Kullanıcı aranırken hata:', err);
-            return res.status(500).json({ error: 'Veri tabanı hatası' });
-        }
+    try {
+        // 1. Önce öğrencinin gerçek adını veritabanından çekiyoruz
+        const sql = 'SELECT * FROM kullanicilar WHERE id = ?';
+        const [results] = await db.query(sql, [kullanici_id]);
+
         if (results.length === 0) {
             return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
         }
@@ -198,56 +209,51 @@ app.post('/api/admin/sertifika-ekle', adminApiKontrol, async (req, res) => {
         const sertifikaNo = `CB-${yil}-${String(kullanici.id).padStart(4, '0')}`;
         const tarih = new Date().toLocaleDateString('tr-TR');
 
-        try {
-            // 3. PDF'i üretiyoruz (isim + tarih otomatik yerleşiyor)
-            const pdfBuffer = await sertifikaPdfUret({
-                ogrenciAdi: kullanici.ogrenci_adi,
-                tarih,
-                sertifikaNo,
-            });
+        // 3. PDF'i üretiyoruz (veritabanındaki 'ogrenci_ad_soyad' kolonunu kullanıyoruz)
+        const pdfBuffer = await sertifikaPdfUret({
+            ogrenciAdi: kullanici.ogrenci_ad_soyad,
+            tarih,
+            sertifikaNo,
+        });
 
-            // 4. Sertifikalar klasörüne kaydediyoruz
-            const sertifikaKlasoru = path.join(__dirname, 'uploads', 'sertifikalar');
-            if (!fs.existsSync(sertifikaKlasoru)) {
-                fs.mkdirSync(sertifikaKlasoru, { recursive: true });
-            }
-            const dosyaAdi = `sertifika-${kullanici.id}.pdf`;
-            fs.writeFileSync(path.join(sertifikaKlasoru, dosyaAdi), pdfBuffer);
-
-            const sertifikaUrl = `/uploads/sertifikalar/${dosyaAdi}`;
-
-            // 5. Veritabanını güncelliyoruz
-            const guncelleSql = `
-                UPDATE kullanicilar
-                SET sertifika_no = ?, sertifika_tarihi = ?, sertifika_durumu = 1
-                WHERE id = ?
-            `;
-            db.query(guncelleSql, [sertifikaNo, tarih, kullanici.id], (err2) => {
-                if (err2) {
-                    console.error('Sertifika bilgisi kaydedilirken hata:', err2);
-                    return res.status(500).json({ error: 'Veri tabanı güncellenemedi' });
-                }
-                res.json({
-                    message: 'Sertifika başarıyla oluşturuldu ve tanımlandı!',
-                    sertifikaUrl,
-                });
-            });
-        } catch (pdfHata) {
-            console.error('Sertifika PDF oluşturulurken hata:', pdfHata);
-            res.status(500).json({ error: 'Sertifika oluşturulamadı' });
+        // 4. Sertifikalar klasörüne kaydediyoruz
+        const sertifikaKlasoru = path.join(__dirname, 'uploads', 'sertifikalar');
+        if (!fs.existsSync(sertifikaKlasoru)) {
+            fs.mkdirSync(sertifikaKlasoru, { recursive: true });
         }
-    });
+        const dosyaAdi = `sertifika-${kullanici.id}.pdf`;
+        fs.writeFileSync(path.join(sertifikaKlasoru, dosyaAdi), pdfBuffer);
+
+        const sertifikaUrl = `/uploads/sertifikalar/${dosyaAdi}`;
+
+        // 5. Veritabanını güncelliyoruz
+        const guncelleSql = `
+            UPDATE kullanicilar
+            SET sertifika_no = ?, sertifika_tarihi = ?, sertifika_durumu = 1
+            WHERE id = ?
+        `;
+        await db.query(guncelleSql, [sertifikaNo, tarih, kullanici.id]);
+
+        res.json({
+            message: 'Sertifika başarıyla oluşturuldu ve tanımlandı!',
+            sertifikaUrl,
+        });
+
+    } catch (error) {
+        console.error('Sertifika oluşturulurken hata:', error);
+        res.status(500).json({ error: 'Sertifika oluşturulamadı veya veritabanı güncellenemedi' });
+    }
 });
 
-// Öğrencinin sertifika durumunu sorgulamak için (veli/öğrenci panelinde kullanılır)
-app.get('/api/sertifika-durumu/:id', (req, res) => {
+// ==========================================
+// ÖĞRENCİ SERTİFİKA DURUMU SORGULAMA (UYUMLU)
+// ==========================================
+app.get('/api/sertifika-durumu/:id', async (req, res) => {
     const { id } = req.params;
-    const sql = 'SELECT sertifika_durumu, sertifika_no, sertifika_tarihi FROM kullanicilar WHERE id = ?';
-    db.query(sql, [id], (err, results) => {
-        if (err) {
-            console.error('Sertifika durumu sorgulanırken hata:', err);
-            return res.status(500).json({ error: 'Veri tabanı hatası' });
-        }
+    try {
+        const sql = 'SELECT sertifika_durumu, sertifika_no, sertifika_tarihi FROM kullanicilar WHERE id = ?';
+        const [results] = await db.query(sql, [id]);
+
         if (results.length === 0) {
             return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
         }
@@ -261,7 +267,10 @@ app.get('/api/sertifika-durumu/:id', (req, res) => {
                 ? `/uploads/sertifikalar/sertifika-${id}.pdf`
                 : null
         });
-    });
+    } catch (err) {
+        console.error('Sertifika durumu sorgulanırken hata:', err);
+        return res.status(500).json({ error: 'Veri tabanı hatası' });
+    }
 });
 
 // ==========================================
