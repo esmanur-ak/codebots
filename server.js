@@ -6,7 +6,18 @@ const fs = require('fs');
 const { sertifikaPdfUret } = require('./sertifikaOlustur');
 
 const app = express();
+
+// ==========================================
+// STATİK DOSYA VE FAVICON AYARLARI (GÜNCELLENDİ)
+// ==========================================
+// Tarayıcının doğrudan /favicon.ico isteğine ana dizindeki dosyayı göndererek cevap veriyoruz
+app.get('/favicon.ico', (req, res) => {
+    res.sendFile(path.join(__dirname, 'favicon.ico'));
+});
+
+// Statik dosyalar için ana dizini dışarıya açıyoruz
 app.use(express.static(__dirname));
+
 const PORT = process.env.PORT || 3000;
 
 // Görsellerin kaydedileceği klasörü oluşturuyoruz (yoksa)
@@ -32,7 +43,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // Yüklenen görsellerin tarayıcıdan erişilebilir olması için statik yol tanımlaması
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use(express.static(path.join(__dirname)));
 
 app.use(session({
     secret: 'codebots-gizli-anahtar-2026',
@@ -61,16 +71,13 @@ db.query('SELECT 1')
 // 1. Veli Kayıt Noktası (POST - UYUMLU)
 // ==========================================
 app.post('/api/kayit', async (req, res) => {
-    // Frontend'den gelen verileri alıyoruz
     const { veli_adi, ogrenci_adi, e_posta, sifre } = req.body;
     
-    // Frontend'den gelebilecek alternatif isimlendirmeleri de garantiye alalım
     const vAd = veli_adi || req.body.veli_ad_soyad || req.body.veliAd;
     const oAd = ogrenci_adi || req.body.ogrenci_ad_soyad || req.body.ogrenciAd;
     const email = e_posta || req.body.eposta;
 
     try {
-        // 1. Veritabanındaki 'eposta' kolonuna göre e-posta kontrolü yapıyoruz (alt tiresiz)
         const kontrolSql = 'SELECT * FROM kullanicilar WHERE eposta = ?';
         const [results] = await db.query(kontrolSql, [email]);
 
@@ -78,7 +85,6 @@ app.post('/api/kayit', async (req, res) => {
             return res.status(400).json({ error: 'Bu e-posta adresiyle zaten bir hesap var!' });
         }
 
-        // 2. Kolon isimlerini veritabanındaki gibi 'veli_ad_soyad', 'ogrenci_ad_soyad' ve 'eposta' yaptık
         const sql = 'INSERT INTO kullanicilar (veli_ad_soyad, ogrenci_ad_soyad, eposta, sifre) VALUES (?, ?, ?, ?)';
         await db.query(sql, [vAd, oAd, email, sifre]);
 
@@ -97,7 +103,6 @@ app.post('/api/giris', async (req, res) => {
     const email = e_posta || req.body.eposta;
 
     try {
-        // Giriş yaparken de 'eposta' kolonunu sorguluyoruz
         const sql = 'SELECT * FROM kullanicilar WHERE eposta = ? AND sifre = ?';
         const [results] = await db.query(sql, [email, sifre]);
 
@@ -109,8 +114,8 @@ app.post('/api/giris', async (req, res) => {
         res.json({
             message: 'Giriş başarılı!',
             id: kullanici.id,
-            veli_adi: kullanici.veli_ad_soyad,    // Veritabanındaki kolon ismine göre çektik
-            ogrenci_adi: kullanici.ogrenci_ad_soyad // Veritabanındaki kolon ismine göre çektik
+            veli_adi: kullanici.veli_ad_soyad,
+            ogrenci_adi: kullanici.ogrenci_ad_soyad
         });
     } catch (err) {
         console.error('Giriş esnasında hata:', err);
@@ -121,8 +126,6 @@ app.post('/api/giris', async (req, res) => {
 // ==========================================
 // ADMIN PANELİ ŞİFRE KORUMASI
 // ==========================================
-
-// ⚠️ Bu şifreyi mutlaka kendi belirleyeceğiniz bir şeyle değiştirin!
 const ADMIN_KULLANICI_ADI = 'elifgök';
 const ADMIN_SIFRESI = '1mühendis3';
 
@@ -162,22 +165,17 @@ app.get('/admin', adminSayfaKontrol, (req, res) => {
     res.sendFile(path.join(__dirname, 'admin-korumali', 'admin.html'));
 });
 
-// ==========================================
-// Admin panelinin velileri görebilmesi için gereken yol (HATASIZ)
-// ==========================================
 app.get('/api/admin/kullanicilar', adminApiKontrol, async (req, res) => {
     try {
-        // Tabloda kesin olan kolonları çekiyoruz (hatalı 'sertifika_durumu' kolonunu sorgudan çıkardık)
         const sql = 'SELECT id, veli_ad_soyad, ogrenci_ad_soyad, eposta FROM kullanicilar ORDER BY id DESC';
         const [results] = await db.query(sql);
 
-        // Frontend'in çökmemesi için sertifika_durumu değerini varsayılan olarak 0 gönderiyoruz:
         const duzenlenmisKullanicilar = results.map(kullanici => ({
             id: kullanici.id,
             veli_adi: kullanici.veli_ad_soyad,
             ogrenci_adi: kullanici.ogrenci_ad_soyad,
             e_posta: kullanici.eposta,
-            sertifika_durumu: 0 // Varsayılan değer
+            sertifika_durumu: 0
         }));
 
         res.json(duzenlenmisKullanicilar);
@@ -188,7 +186,7 @@ app.get('/api/admin/kullanicilar', adminApiKontrol, async (req, res) => {
 });
 
 // ==========================================
-// SERTİFİKA TANIMLAMA API YOLU (EKSİKSİZ VE HATASIZ)
+// SERTİFİKA TANIMLAMA API YOLU
 // ==========================================
 app.post('/api/admin/sertifika-ekle', adminApiKontrol, async (req, res) => {
     const { kullanici_id } = req.body;
@@ -221,7 +219,6 @@ app.post('/api/admin/sertifika-ekle', adminApiKontrol, async (req, res) => {
 
         const sertifikaUrl = `/uploads/sertifikalar/${dosyaAdi}`;
 
-        // Başarılı dönüş yapıyoruz
         res.json({
             message: 'Sertifika başarıyla oluşturuldu!',
             sertifikaUrl,
@@ -234,7 +231,7 @@ app.post('/api/admin/sertifika-ekle', adminApiKontrol, async (req, res) => {
 });
 
 // ==========================================
-// ÖĞRENCİ SERTİFİKA DURUMU SORGULAMA (DOSYA KONTROLLÜ ÇÖZÜM)
+// ÖĞRENCİ SERTİFİKA DURUMU SORGULAMA
 // ==========================================
 app.get('/api/sertifika-durumu/:id', async (req, res) => {
     const { id } = req.params;
@@ -250,7 +247,6 @@ app.get('/api/sertifika-durumu/:id', async (req, res) => {
         const dosyaAdi = `sertifika-${kullanici.id}.pdf`;
         const sertifikaYolu = path.join(__dirname, 'uploads', 'sertifikalar', dosyaAdi);
 
-        // Sunucuda bu öğrenciye ait sertifika PDF'i fiziksel olarak var mı kontrol ediyoruz
         if (fs.existsSync(sertifikaYolu)) {
             const yil = new Date().getFullYear();
             const sertifikaNo = `CB-${yil}-${String(kullanici.id).padStart(4, '0')}`;
@@ -258,14 +254,13 @@ app.get('/api/sertifika-durumu/:id', async (req, res) => {
             const sertifikaUrl = `/uploads/sertifikalar/${dosyaAdi}`;
 
             return res.json({
-                hazir: true, // PDF varsa artık "true" dönüyoruz! 🎉
+                hazir: true,
                 sertifikaNo: sertifikaNo,
                 tarih: tarih,
                 sertifikaUrl: sertifikaUrl
             });
         }
 
-        // Eğer sunucuda dosya yoksa henüz hazır değil döndür
         res.json({
             hazir: false,
             sertifikaNo: null,
@@ -278,13 +273,12 @@ app.get('/api/sertifika-durumu/:id', async (req, res) => {
         return res.status(500).json({ error: 'Veri tabanı hatası' });
     }
 });
+
 // ==========================================
 // KURSLAR API YOLLARI (TAM SİSTEM - CRUD)
 // ==========================================
-
 app.get('/api/kurslar', async (req, res) => {
     try {
-        // Veritabanındaki kolon isimleri: id, baslik, aciklama, hedef_yas, resim, olusturulma_tarihi
         const sql = 'SELECT id, baslik AS kurs_adi, hedef_yas AS yas_grubu, aciklama, resim FROM kurslar';
         const [results] = await db.query(sql);
         res.json(results);
@@ -301,7 +295,6 @@ app.post('/api/kurslar', async (req, res) => {
     const icerik = aciklama || req.body.aciklama;
 
     try {
-        // SQL sorgusunu 'baslik' ve 'hedef_yas' kolonlarına göre güncelledik
         const sql = 'INSERT INTO kurslar (baslik, hedef_yas, aciklama) VALUES (?, ?, ?)';
         const [result] = await db.query(sql, [adi, yas, icerik]);
         res.status(201).json({ message: 'Kurs başarıyla eklendi', id: result.insertId });
@@ -319,7 +312,6 @@ app.put('/api/kurslar/:id', async (req, res) => {
     const icerik = aciklama || req.body.aciklama;
 
     try {
-        // SQL sorgusunu 'baslik' ve 'hedef_yas' kolonlarına göre güncelledik
         const sql = 'UPDATE kurslar SET baslik = ?, hedef_yas = ?, aciklama = ? WHERE id = ?';
         await db.query(sql, [adi, yas, icerik, id]);
         res.json({ message: 'Kurs başarıyla güncellendi.' });
@@ -344,7 +336,6 @@ app.delete('/api/kurslar/:id', async (req, res) => {
 // ==========================================
 // REFERANSLAR (İŞ BİRLİKLERİ) API YOLLARI
 // ==========================================
-
 app.get('/api/referanslar', async (req, res) => {
     try {
         const sql = 'SELECT * FROM referanslar ORDER BY id DESC';
@@ -408,16 +399,13 @@ app.delete('/api/referanslar/:id', async (req, res) => {
 });
 
 // ==========================================
-// MESAJLAR API YOLLARI (GÜNCEL & UYUMLU)
+// MESAJLAR API YOLLARI
 // ==========================================
-
 app.post('/api/mesajlar', async (req, res) => {
     const { ad_soyad, e_posta, konu, mesaj } = req.body;
-    // Frontend'den e_posta gelse bile veritabanındaki eposta kolonuna yazdırıyoruz
     const email = e_posta || req.body.e_posta || req.body.eposta;
     
     try {
-        // Kolon adı veritabanındaki gibi 'eposta' yapıldı
         const sql = 'INSERT INTO mesajlar (ad_soyad, eposta, konu, mesaj) VALUES (?, ?, ?, ?)';
         await db.query(sql, [ad_soyad, email, konu, mesaj]);
         res.status(200).json({ message: 'Mesaj başarıyla kaydedildi!' });
@@ -429,8 +417,6 @@ app.post('/api/mesajlar', async (req, res) => {
 
 app.get('/api/mesajlar', async (req, res) => {
     try {
-        // Tarih sıralaması 'olusturulma_tarihi' kolonuna göre güncellendi.
-        // Frontend'in kırılmaması için eposta'yı e_posta, olusturulma_tarihi'ni ise tarih olarak takma adla (AS) çektik.
         const sql = 'SELECT id, ad_soyad, eposta AS e_posta, konu, mesaj, okundu_mu, olusturulma_tarihi AS tarih FROM mesajlar ORDER BY olusturulma_tarihi DESC';
         const [results] = await db.query(sql);
         res.json(results);
@@ -448,24 +434,8 @@ app.delete('/api/mesajlar/:id', async (req, res) => {
         res.json({ message: 'Mesaj başarıyla silindi.' });
     } catch (err) {
         console.error('Mesaj silinirken hata oluştu:', err);
-        return res.status(500).json({ error: 'Veri tabanı hatası' });
+        return res.status(500).json5({ error: 'Veri tabanı hatası' });
     }
-});
-
-// ==========================================
-// (Eski) FORM TABANLI GİRİŞ ROTASI
-// ==========================================
-app.post('/giris-yap', (req, res) => {
-    const { ogrenci_ad_soyad } = req.body;
-
-    // Not: Bu rota şu anda kullanılmıyor gibi görünüyor (asıl giriş akışı /api/giris + sessionStorage).
-    // Yine de bozuk kalmasın diye değişken adı hatası düzeltildi.
-    const sertifikaDurumu = "false";
-
-    res.cookie('aktif_ogrenci', ogrenci_ad_soyad);
-    res.cookie('sertifika_onay', sertifikaDurumu);
-
-    res.redirect('/');
 });
 
 // TABLO YAPILARINI KONTROL ETMEK İÇİN GEÇİCİ ROTA
@@ -474,8 +444,6 @@ app.get('/api/tablo-kontrol', async (req, res) => {
         const [kurslarYapisi] = await db.query('DESCRIBE kurslar');
         const [referanslarYapisi] = await db.query('DESCRIBE referanslar');
         const [mesajlarYapisi] = await db.query('DESCRIBE mesajlar');
-        
-        // Kullanıcı tablonun adının 'kullanicilar' olduğunu varsayarak sorguluyoruz:
         const [kullanicilarYapisi] = await db.query('DESCRIBE kullanicilar'); 
         
         res.json({
@@ -491,6 +459,7 @@ app.get('/api/tablo-kontrol', async (req, res) => {
         });
     }
 });
+
 // Sunucuyu başlat
 app.listen(PORT, () => {
     console.log(`Sunucu http://localhost:${PORT} adresinde tıkır tıkır çalışıyor!`);
