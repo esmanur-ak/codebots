@@ -25,17 +25,14 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// Yüklenen görsellerin tarayıcıdan erişilebilir olması için
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Gelen JSON / form verilerini okuyabilmek için middleware
+// Gelen JSON / form verilerini okuyabilmek için middleware'ler
 app.use(express.json());
-const path = require('path');
-
-// Uploads klasörünü dış dünyaya (statik erişime) açıyoruz:
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.urlencoded({ extended: true }));
+
+// Yüklenen görsellerin tarayıcıdan erişilebilir olması için statik yol tanımlaması
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.static(path.join(__dirname)));
+
 app.use(session({
     secret: 'codebots-gizli-anahtar-2026',
     resave: false,
