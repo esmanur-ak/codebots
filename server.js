@@ -459,16 +459,7 @@ app.get('/api/tablo-kontrol', async (req, res) => {
         });
     }
 });
-// 🟢 GEÇİCİ SÜTUN EKLEME ROTASI (Çalıştırdıktan sonra silebilirsin)
-app.get('/api/veritabani-guncelle', async (req, res) => {
-    try {
-        const sql = 'ALTER TABLE kullanicilar ADD COLUMN sertifika_hazir TINYINT(1) DEFAULT 0;';
-        await db.query(sql);
-        res.send('🎉 "sertifika_hazir" sütunu başarıyla veritabanına eklendi!');
-    } catch (err) {
-        res.status(500).send('Hata oluştu (Belki de sütun zaten eklenmiştir): ' + err.message);
-    }
-});
+
 // Sunucuyu başlat
 app.listen(PORT, () => {
     console.log(`Sunucu http://localhost:${PORT} adresinde tıkır tıkır çalışıyor!`);
