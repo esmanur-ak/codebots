@@ -286,38 +286,62 @@ adminKurslariGetir();
     mesajlariGetir();
     // Veri tabanındaki velileri panele çeken yeni fonksiyonumuz
     async function velileriGetir() {
-    try {
-        const response = await fetch('/api/admin/kullanicilar');
-        const veliler = await response.json();
-        const tabloVucut = document.getElementById('veli-tablo-vucut');
-        tabloVucut.innerHTML = '';
+        try {
+            const response = await fetch('/api/admin/kullanicilar');
+            const veliler = await response.json();
+            const tabloVucut = document.getElementById('veli-tablo-vucut');
+            tabloVucut.innerHTML = '';
 
-        if(veliler.length === 0) {
-            tabloVucut.innerHTML = `<tr><td colspan="4" style="padding: 20px; text-align: center; color: #94a3b8;">Henüz kayıtlı bir veli yok.</td></tr>`;
-            return;
+            if(veliler.length === 0) {
+                tabloVucut.innerHTML = `<tr><td colspan="4" style="padding: 20px; text-align: center; color: #94a3b8;">Henüz kayıtlı bir veli yok.</td></tr>`;
+                return;
+            }
+
+            veliler.forEach(v => {
+    const islemHucresi = v.sertifika_durumu === 1
+        ? `<span style="display:inline-flex; align-items:center; gap:6px; background-color:#dcfce7; color:#166534; padding:6px 12px; border-radius:4px; font-weight:bold;">✅ Tanımlandı</span>`
+        : `<button onclick="sertifikaOnayla(${v.id}, '${v.ogrenci_adi}')" style="background-color: #0056b3; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Sertifika Tanımla 🏅</button>`;
+
+    tabloVucut.innerHTML += `
+        <tr style="border-bottom: 1px solid #e2e8f0;">
+            <td style="padding: 12px; font-weight: bold; color: #0f172a;">${v.veli_adi}</td>
+            <td style="padding: 12px;">${v.ogrenci_adi}</td>
+            <td style="padding: 12px; color: #64748b;">${v.e_posta}</td>
+            <td style="padding: 12px;">
+                ${islemHucresi}
+            </td>
+        </tr>
+    `;
+});
+        } catch (error) {
+            console.error('Veliler yüklenirken hata:', error);
         }
-
-        veliler.forEach(v => {
-            // Number() kullanarak gelen değer string "1" bile olsa 1 sayısına çevirip güvenle eşleştiriyoruz
-            const islemHucresi = Number(v.sertifika_durumu) === 1
-                ? `<span style="display:inline-flex; align-items:center; gap:6px; background-color:#dcfce7; color:#166534; padding:6px 12px; border-radius:4px; font-weight:bold;">✅ Tanımlandı</span>`
-                : `<button onclick="sertifikaOnayla(${v.id}, '${v.ogrenci_adi}')" style="background-color: #0056b3; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Sertifika Tanımla 🏅</button>`;
-
-            tabloVucut.innerHTML += `
-                <tr style="border-bottom: 1px solid #e2e8f0;">
-                    <td style="padding: 12px; font-weight: bold; color: #0f172a;">${v.veli_adi}</td>
-                    <td style="padding: 12px;">${v.ogrenci_adi}</td>
-                    <td style="padding: 12px; color: #64748b;">${v.e_posta}</td>
-                    <td style="padding: 12px;">
-                        ${islemHucresi}
-                    </td>
-                </tr>
-            `;
-        });
-    } catch (error) {
-        console.error('Veliler yüklenirken hata:', error);
     }
-}
+
+    // Teyzen yeşil butona bastığında çalışacak sihirli fonksiyon
+    async function sertifikaOnayla(kullaniciId, ogrenciAdi) {
+        const veri = {
+            kullanici_id: kullaniciId,
+            sertifika_adi: "CodeBots Başarı Sertifikası" // Standart tek sertifika kararımız!
+        };
+
+        try {
+            const res = await fetch('/api/admin/sertifika-ekle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(veri)
+            });
+
+            if(res.ok) {
+    alert(`🎉 Başarılı! ${ogrenciAdi} isimli öğrenciye CodeBots Başarı Sertifikası tanımlandı.`);
+    velileriGetir();
+} else {
+                alert('❌ Sertifika tanımlanırken bir hata oluştu.');
+            }
+        } catch (error) {
+            console.error('Sertifika gönderim hatası:', error);
+        }
+    }
 
     // Sayfa açıldığında veli listesini de otomatik doldur
     velileriGetir();
