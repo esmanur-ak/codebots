@@ -896,11 +896,11 @@ function oturumDurumunuGuncelle() {
                                 '<h3 style="font-size: 1.5rem; margin: 15px 0 10px 0; font-weight: 700;">Tebrikler, ' + aktifOgrenci + '!</h3>' +
                                 '<p style="margin: 0 0 20px 0; font-size: 0.95rem; line-height: 1.6;">' +
                                     'CodeBots Başarı Sertifikanız hazır. Sertifika No: <strong>' + veri.sertifikaNo + '</strong>' +
-                                </p>' +
+                                '</p>' +
                                 '<button onclick="sertifikayiYazdir(\'' + aktifOgrenci + '\', \'' + veri.sertifikaNo + '\')" ' +
                                    'style="display:inline-block; background:#0056b3; color:#ffffff; font-weight:700; padding:12px 24px; border:none; border-radius:10px; cursor:pointer; font-size:1rem; transition: background 0.2s;">' +
                                     'Sertifikamı Görüntüle & İndir 🎉' +
-                                </button>' +
+                                '</button>' +
                             '</div>';
                         } else {
                             sertifikaKutusu.innerHTML = '<div style="background: #eff6ff; border: 1px solid #3b82f6; padding: 40px; border-radius: 20px; text-align:center; color: #1e40af;">' +
@@ -934,8 +934,6 @@ function sertifikayiYazdir(ogrenciAdi, sertifikaNo) {
         '<head>' +
         '<meta charset="UTF-8">' +
         '<title>CodeBots Başarı Belgesi - ' + ogrenciAdi + '</title>' +
-        /* 🟢 html2pdf kütüphanesinin script bitişini tarayıcı hatası vermemesi için <\/script> olarak kaçış karakteriyle yazdık */
-        '<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>' +
         '<style>' +
           '@import url(\'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap\');' +
 
@@ -1176,10 +1174,9 @@ function sertifikayiYazdir(ogrenciAdi, sertifikaNo) {
             'margin-top: 4px;' +
           '}' +
 
-          /* 🟢 Butonların yazdırırken çıkmaması için CSS filtresi */
+          /* 🟢 Sihirli Kısım: Butonu sadece ekranda gösterir, yazdırırken tamamen gizler! */
           '.no-print {' +
-            'display: flex;' +
-            'gap: 15px;' +
+            'display: block;' +
           '}' +
 
           '@media print {' +
@@ -1207,19 +1204,14 @@ function sertifikayiYazdir(ogrenciAdi, sertifikaNo) {
         '</head>' +
         '<body>' +
 
-        /* 🖨️ KONTROL PANELİ (Hem Yazdır Hem Doğrudan İndir Butonları) */
+        /* 🖨️ Yazdırma Butonu (Sadece Ekranda Görünür) */
         '<div class="no-print" style="position: fixed; top: 15px; z-index: 9999; text-align: center;">' +
-          /* 1. Buton: Doğrudan Cihaza PDF İndir */
-          '<button onclick="pdfIndir()" style="padding: 12px 24px; background: #10b981; color: white; border: none; border-radius: 30px; font-weight: bold; cursor: pointer; font-family: \'Poppins\', sans-serif; box-shadow: 0 4px 15px rgba(16,185,129,0.3); font-size: 14px; display: flex; align-items: center; gap: 8px;">' +
-            '📥 PDF Olarak İndir' +
-          '</button>' +
-          /* 2. Buton: Klasik Yazıcıya Gönder */
-          '<button onclick="window.print()" style="padding: 12px 24px; background: #0056b3; color: white; border: none; border-radius: 30px; font-weight: bold; cursor: pointer; font-family: \'Poppins\', sans-serif; box-shadow: 0 4px 15px rgba(0,86,179,0.3); font-size: 14px; display: flex; align-items: center; gap: 8px;">' +
-            '🖨️ Yazıcıya Gönder' +
+          '<button onclick="window.print()" style="padding: 12px 30px; background: #0056b3; color: white; border: none; border-radius: 30px; font-weight: bold; cursor: pointer; font-family: \'Poppins\', sans-serif; box-shadow: 0 4px 15px rgba(0,86,179,0.3); font-size: 14px; display: flex; align-items: center; gap: 8px;">' +
+            '🖨️ Sertifikayı Yazdır / PDF Kaydet' +
           '</button>' +
         '</div>' +
 
-        '<div class="certificate" id="sertifika-alani">' +
+        '<div class="certificate">' +
           '<div class="side-bar"></div>' +
           '<div class="blob-top-left"></div>' +
           '<div class="blob-bottom-right"></div>' +
@@ -1278,25 +1270,11 @@ function sertifikayiYazdir(ogrenciAdi, sertifikaNo) {
           '<div class="robot">🤖</div>' +
         '</div>' +
 
-        /* 🟢 PDF Üretme ve İndirme Scriptini tarayıcı tuzağı vermemesi için <\/script> ile güvene aldık */
-        '<script>' +
-          'function pdfIndir() {' +
-            'const element = document.getElementById("sertifika-alani");' +
-            'const opt = {' +
-              'margin: 0,' +
-              'filename: "CodeBots_Basari_Belgesi_' + ogrenciAdi.replace(/ /g, '_') + '.pdf",' +
-              'image: { type: "jpeg", quality: 1.0 },' +
-              'html2canvas: { scale: 3, useCORS: true, logging: false },' + 
-              'jsPDF: { unit: "px", format: [940, 630], hotfixes: ["px_scaling"] }' + 
-            '};' +
-            'html2pdf().set(opt).from(element).save();' +
-          '}' +
-        '<\/script>' +
-
         '</body>' +
         '</html>');
 
     yazdirmaPenceresi.document.close();
+    // Otomatik yazdırma tetiklenmiyor ve pencere kendiliğinden kapanmıyor!
 }
 </script>
 <script>
