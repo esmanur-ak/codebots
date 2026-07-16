@@ -207,7 +207,7 @@ else {
                 const sonuc = await response.json();
 
                 if (response.ok) {
-    alert(`Hoş geldiniz Sayın ${data.ogrenci_adi}! Giriş başarıyla sağlandı.`);
+    alert(`Hoş geldiniz Sayın ${sonuc.ogrenci_adi}! Giriş başarıyla sağlandı.`);
     
     sessionStorage.setItem('veliAdi', sonuc.veli_adi);
     sessionStorage.setItem('ogrenciAdi', sonuc.ogrenci_adi);
