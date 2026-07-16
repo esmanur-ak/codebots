@@ -167,7 +167,8 @@ app.get('/admin', adminSayfaKontrol, (req, res) => {
 
 app.get('/api/admin/kullanicilar', adminApiKontrol, async (req, res) => {
     try {
-        const sql = 'SELECT id, veli_ad_soyad, ogrenci_ad_soyad, eposta FROM kullanicilar ORDER BY id DESC';
+        // 1. SQL sorgusuna 'sertifika_hazir' kolonunu ekledik (Aiven'dan bu bilgiyi de getirecek)
+        const sql = 'SELECT id, veli_ad_soyad, ogrenci_ad_soyad, eposta, sertifika_hazir FROM kullanicilar ORDER BY id DESC';
         const [results] = await db.query(sql);
 
         const duzenlenmisKullanicilar = results.map(kullanici => ({
@@ -175,7 +176,8 @@ app.get('/api/admin/kullanicilar', adminApiKontrol, async (req, res) => {
             veli_adi: kullanici.veli_ad_soyad,
             ogrenci_adi: kullanici.ogrenci_ad_soyad,
             e_posta: kullanici.eposta,
-            sertifika_durumu: 0
+            // 2. Sabit 0 yerine veritabanındaki gerçek durum bilgisini (0 veya 1) gönderiyoruz
+            sertifika_durumu: kullanici.sertifika_hazir
         }));
 
         res.json(duzenlenmisKullanicilar);
