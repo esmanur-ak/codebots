@@ -929,11 +929,13 @@ function sertifikayiYazdir(ogrenciAdi, sertifikaNo) {
     const yazdirmaPenceresi = window.open('', '_blank', 'width=1100,height=800');
     const bugun = new Date().toLocaleDateString('tr-TR');
 
+    // Tarayıcı hatası almamak için html2pdf script bitişini <\/script> olarak güvene alıyoruz
     yazdirmaPenceresi.document.write('<!DOCTYPE html>' +
         '<html lang="tr">' +
         '<head>' +
         '<meta charset="UTF-8">' +
         '<title>CodeBots Başarı Belgesi - ' + ogrenciAdi + '</title>' +
+        '<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>' +
         '<style>' +
           '@import url(\'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap\');' +
 
@@ -1174,9 +1176,9 @@ function sertifikayiYazdir(ogrenciAdi, sertifikaNo) {
             'margin-top: 4px;' +
           '}' +
 
-          /* 🟢 Sihirli Kısım: Butonu sadece ekranda gösterir, yazdırırken tamamen gizler! */
           '.no-print {' +
-            'display: block;' +
+            'display: flex;' +
+            'gap: 15px;' +
           '}' +
 
           '@media print {' +
@@ -1204,14 +1206,16 @@ function sertifikayiYazdir(ogrenciAdi, sertifikaNo) {
         '</head>' +
         '<body>' +
 
-        /* 🖨️ Yazdırma Butonu (Sadece Ekranda Görünür) */
         '<div class="no-print" style="position: fixed; top: 15px; z-index: 9999; text-align: center;">' +
-          '<button onclick="window.print()" style="padding: 12px 30px; background: #0056b3; color: white; border: none; border-radius: 30px; font-weight: bold; cursor: pointer; font-family: \'Poppins\', sans-serif; box-shadow: 0 4px 15px rgba(0,86,179,0.3); font-size: 14px; display: flex; align-items: center; gap: 8px;">' +
-            '🖨️ Sertifikayı Yazdır / PDF Kaydet' +
+          '<button onclick="pdfIndir()" style="padding: 12px 24px; background: #10b981; color: white; border: none; border-radius: 30px; font-weight: bold; cursor: pointer; font-family: \'Poppins\', sans-serif; box-shadow: 0 4px 15px rgba(16,185,129,0.3); font-size: 14px; display: flex; align-items: center; gap: 8px;">' +
+            '📥 PDF Olarak İndir' +
+          '</button>' +
+          '<button onclick="window.print()" style="padding: 12px 24px; background: #0056b3; color: white; border: none; border-radius: 30px; font-weight: bold; cursor: pointer; font-family: \'Poppins\', sans-serif; box-shadow: 0 4px 15px rgba(0,86,179,0.3); font-size: 14px; display: flex; align-items: center; gap: 8px;">' +
+            '🖨️ Yazıcıya Gönder' +
           '</button>' +
         '</div>' +
 
-        '<div class="certificate">' +
+        '<div class="certificate" id="sertifika-alani">' +
           '<div class="side-bar"></div>' +
           '<div class="blob-top-left"></div>' +
           '<div class="blob-bottom-right"></div>' +
@@ -1270,12 +1274,26 @@ function sertifikayiYazdir(ogrenciAdi, sertifikaNo) {
           '<div class="robot">🤖</div>' +
         '</div>' +
 
+        '<script>' +
+          'function pdfIndir() {' +
+            'const element = document.getElementById("sertifika-alani");' +
+            'const opt = {' +
+              'margin: 0,' +
+              'filename: "CodeBots_Basari_Belgesi_' + ogrenciAdi.replace(/ /g, '_') + '.pdf",' +
+              'image: { type: "jpeg", quality: 1.0 },' +
+              'html2canvas: { scale: 3, useCORS: true, logging: false },' + 
+              'jsPDF: { unit: "px", format: [940, 630], hotfixes: ["px_scaling"] }' + 
+            '};' +
+            'html2pdf().set(opt).from(element).save();' +
+          '}' +
+        '<\/script>' +
+
         '</body>' +
         '</html>');
 
     yazdirmaPenceresi.document.close();
-    // Otomatik yazdırma tetiklenmiyor ve pencere kendiliğinden kapanmıyor!
 }
+
 </script>
 <script>
   const hamburgerBtn = document.getElementById('hamburger-btn');
