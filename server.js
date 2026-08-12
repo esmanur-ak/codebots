@@ -7,12 +7,46 @@ const { sertifikaPdfUret } = require('./sertifikaOlustur');
 
 const app = express();
 
+// HTTP isteklerini HTTPS'e yönlendir (Localhost hariç)
+app.use((req, res, next) => {
+    const isHttps = req.secure || req.headers['x-forwarded-proto'] === 'https';
+    const isLocal = req.headers.host.includes('localhost') || req.headers.host.includes('127.0.0.1');
+    if (!isHttps && !isLocal) {
+        return res.redirect(301, `https://${req.headers.host}${req.url}`);
+    }
+    next();
+});
+
+// ==========================================
+// SEO VE STATİK DOSYA ROTALARI (BURAYA EKLENDİ)
+// ==========================================
+app.get('/robots.txt', (req, res) => {
+    res.sendFile(path.join(__dirname, 'robots.txt'));
+});
+
+app.get('/sitemap.xml', (req, res) => {
+    res.sendFile(path.join(__dirname, 'sitemap.xml'));
+});
+// ===
+
 // ==========================================
 // STATİK DOSYA VE FAVICON AYARLARI (GÜNCELLENDİ)
 // ==========================================
 // Tarayıcının doğrudan /favicon.ico isteğine ana dizindeki dosyayı göndererek cevap veriyoruz
 app.get('/favicon.ico', (req, res) => {
     res.sendFile(path.join(__dirname, 'favicon.ico'));
+});
+
+// GÜVENLİK: Hassas dosyalara doğrudan erişimi engelle
+app.use((req, res, next) => {
+    const yasakliUzantilar = ['.js', '.json', '.env', '.sql'];
+    const yasakliKlasorler = ['/node_modules', '/.git'];
+
+    if (yasakliUzantilar.some(ext => req.path.endsWith(ext)) ||
+        yasakliKlasorler.some(folder => req.path.startsWith(folder))) {
+        return res.status(403).send('Erişim reddedildi.');
+    }
+    next();
 });
 
 // Statik dosyalar için ana dizini dışarıya açıyoruz
@@ -72,7 +106,7 @@ db.query('SELECT 1')
 // ==========================================
 app.post('/api/kayit', async (req, res) => {
     const { veli_adi, ogrenci_adi, e_posta, sifre } = req.body;
-    
+
     const vAd = veli_adi || req.body.veli_ad_soyad || req.body.veliAd;
     const oAd = ogrenci_adi || req.body.ogrenci_ad_soyad || req.body.ogrenciAd;
     const email = e_posta || req.body.eposta;
@@ -86,9 +120,14 @@ app.post('/api/kayit', async (req, res) => {
         }
 
         const sql = 'INSERT INTO kullanicilar (veli_ad_soyad, ogrenci_ad_soyad, eposta, sifre) VALUES (?, ?, ?, ?)';
-        await db.query(sql, [vAd, oAd, email, sifre]);
+        const [result] = await db.query(sql, [vAd, oAd, email, sifre]);
 
-        res.status(201).json({ message: 'Hesabınız başarıyla oluşturuldu!' });
+        res.status(201).json({
+            message: 'Hesabınız başarıyla oluşturuldu!',
+            id: result.insertId,
+            veli_adi: vAd,
+            ogrenci_adi: oAd
+        });
     } catch (err) {
         console.error('Kayıt esnasında hata:', err);
         return res.status(500).json({ error: 'Veri tabanı hatası veya kayıt yapılamadı.' });
@@ -206,28 +245,39 @@ app.post('/api/admin/sertifika-ekle', adminApiKontrol, async (req, res) => {
         const sertifikaNo = `CB-${yil}-${String(kullanici.id).padStart(4, '0')}`;
         const tarih = new Date().toLocaleDateString('tr-TR');
 
-        const pdfBuffer = await sertifikaPdfUret({
-            ogrenciAdi: kullanici.ogrenci_ad_soyad,
-            tarih,
-            sertifikaNo,
-        });
-
-        const sertifikaKlasoru = path.join(__dirname, 'uploads', 'sertifikalar');
-        if (!fs.existsSync(sertifikaKlasoru)) {
-            fs.mkdirSync(sertifikaKlasoru, { recursive: true });
-        }
+        let pdfBuffer = null;
         const dosyaAdi = `sertifika-${kullanici.id}.pdf`;
-        fs.writeFileSync(path.join(sertifikaKlasoru, dosyaAdi), pdfBuffer);
-
         const sertifikaUrl = `/uploads/sertifikalar/${dosyaAdi}`;
 
+        try {
+            pdfBuffer = await sertifikaPdfUret({
+                ogrenciAdi: kullanici.ogrenci_ad_soyad,
+                tarih,
+                sertifikaNo,
+            });
+
+            const sertifikaKlasoru = path.join(__dirname, 'uploads', 'sertifikalar');
+            if (!fs.existsSync(sertifikaKlasoru)) {
+                fs.mkdirSync(sertifikaKlasoru, { recursive: true });
+            }
+            fs.writeFileSync(path.join(sertifikaKlasoru, dosyaAdi), pdfBuffer);
+        } catch (pdfHata) {
+            console.warn('Puppeteer ile PDF üretilemedi (muhtemelen sunucuda Chromium bağımlılıkları eksik), ancak veritabanı güncellemesi ile devam ediliyor:', pdfHata);
+            // Puppeteer sunucuda hata verse bile, veli arayüzünde indirme işlemi dinamik olarak (html2pdf.js ile)
+            // tarayıcı üzerinde yapıldığı için tanımlama işlemini engellemiyoruz.
+        }
+
+        // Kullanıcının sertifika durumunu veritabanında güncelliyoruz
+        const guncelleSql = 'UPDATE kullanicilar SET sertifika_hazir = 1 WHERE id = ?';
+        await db.query(guncelleSql, [kullanici_id]);
+
         res.json({
-            message: 'Sertifika başarıyla oluşturuldu!',
+            message: 'Sertifika başarıyla tanımlandı!',
             sertifikaUrl,
         });
 
     } catch (error) {
-        console.error('Sertifika oluşturulurken hata:', error);
+        console.error('Sertifika oluşturulurken genel hata:', error);
         res.status(500).json({ error: 'Sertifika oluşturulamadı' });
     }
 });
@@ -238,7 +288,7 @@ app.post('/api/admin/sertifika-ekle', adminApiKontrol, async (req, res) => {
 app.get('/api/sertifika-durumu/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        const sql = 'SELECT id, ogrenci_ad_soyad FROM kullanicilar WHERE id = ?';
+        const sql = 'SELECT id, ogrenci_ad_soyad, sertifika_hazir FROM kullanicilar WHERE id = ?';
         const [results] = await db.query(sql, [id]);
 
         if (results.length === 0) {
@@ -246,13 +296,12 @@ app.get('/api/sertifika-durumu/:id', async (req, res) => {
         }
 
         const kullanici = results[0];
-        const dosyaAdi = `sertifika-${kullanici.id}.pdf`;
-        const sertifikaYolu = path.join(__dirname, 'uploads', 'sertifikalar', dosyaAdi);
 
-        if (fs.existsSync(sertifikaYolu)) {
+        if (kullanici.sertifika_hazir === 1) {
             const yil = new Date().getFullYear();
             const sertifikaNo = `CB-${yil}-${String(kullanici.id).padStart(4, '0')}`;
             const tarih = new Date().toLocaleDateString('tr-TR');
+            const dosyaAdi = `sertifika-${kullanici.id}.pdf`;
             const sertifikaUrl = `/uploads/sertifikalar/${dosyaAdi}`;
 
             return res.json({
@@ -406,7 +455,7 @@ app.delete('/api/referanslar/:id', async (req, res) => {
 app.post('/api/mesajlar', async (req, res) => {
     const { ad_soyad, e_posta, konu, mesaj } = req.body;
     const email = e_posta || req.body.e_posta || req.body.eposta;
-    
+
     try {
         const sql = 'INSERT INTO mesajlar (ad_soyad, eposta, konu, mesaj) VALUES (?, ?, ?, ?)';
         await db.query(sql, [ad_soyad, email, konu, mesaj]);
@@ -446,8 +495,8 @@ app.get('/api/tablo-kontrol', async (req, res) => {
         const [kurslarYapisi] = await db.query('DESCRIBE kurslar');
         const [referanslarYapisi] = await db.query('DESCRIBE referanslar');
         const [mesajlarYapisi] = await db.query('DESCRIBE mesajlar');
-        const [kullanicilarYapisi] = await db.query('DESCRIBE kullanicilar'); 
-        
+        const [kullanicilarYapisi] = await db.query('DESCRIBE kullanicilar');
+
         res.json({
             kurslar: kurslarYapisi,
             referanslar: referanslarYapisi,
@@ -455,9 +504,9 @@ app.get('/api/tablo-kontrol', async (req, res) => {
             kullanicilar: kullanicilarYapisi
         });
     } catch (err) {
-        res.status(500).json({ 
-            error: "Tablo yapısı okunurken hata oluştu!", 
-            detay: err.message 
+        res.status(500).json({
+            error: "Tablo yapısı okunurken hata oluştu!",
+            detay: err.message
         });
     }
 });
